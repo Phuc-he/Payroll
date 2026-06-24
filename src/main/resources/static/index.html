@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll & Shift Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <div class="logo-icon">✨</div>
+                <h1>Smart Payroll</h1>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-target="overview-page">
+                    <span class="icon">📊</span> Tổng Quan Tháng
+                </button>
+                <button class="nav-item" data-target="payroll-page">
+                    <span class="icon">💰</span> Báo Cáo Lương
+                </button>
+                <button class="nav-item" data-target="employees-page">
+                    <span class="icon">👥</span> Danh Sách NV
+                </button>
+                <button class="nav-item" data-target="summary-page">
+                    <span class="icon">📋</span> Tổng Kết Ca
+                </button>
+                <button class="nav-item" data-target="create-page">
+                    <span class="icon">➕</span> Tạo Ca Mới
+                </button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            
+            <!-- TRANG 1: TỔNG QUAN -->
+            <div id="overview-page" class="page-section active">
+                <section class="glass-card full-width">
+                    <div class="card-header">
+                        <h2>Tổng Quan Doanh Thu Tháng</h2>
+                        <p>Tra cứu tổng tiền đám, lương, tiền cắt và tiền ứng trước</p>
+                    </div>
+                    <form id="overviewForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Tháng</label>
+                                <input type="number" id="overviewMonth" value="6" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Năm</label>
+                                <input type="number" id="overviewYear" value="2026" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="background: var(--secondary-gradient)">Xem Tổng Quan</button>
+                    </form>
+                    <div id="overviewResult" class="result-box hidden"></div>
+                </section>
+            </div>
+
+            <!-- TRANG 2: BÁO CÁO LƯƠNG -->
+            <div id="payroll-page" class="page-section">
+                <section class="glass-card full-width">
+                    <div class="card-header">
+                        <h2>Báo Cáo Lương Nhân Viên</h2>
+                        <p>Tra cứu thu nhập theo tháng của từng cá nhân</p>
+                    </div>
+                    <form id="payrollForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>ID Nhân viên (Ví dụ: phucnd)</label>
+                                <input type="text" id="empId" value="phucnd" list="employeeSuggestions" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Tháng</label>
+                                <input type="number" id="month" value="6" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Năm</label>
+                                <input type="number" id="year" value="2026" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Xem Báo Cáo Lương</button>
+                    </form>
+                    <div id="payrollResult" class="result-box hidden"></div>
+                    
+                    <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 2.5rem 0 1.5rem 0;">
+                    
+                    <div class="card-header" style="margin-bottom: 1.5rem;">
+                        <h2 style="font-size: 1.25rem;">Thanh Toán / Ứng Lương</h2>
+                        <p>Nhập số tiền muốn trả cho nhân viên (Ứng trước hoặc Thanh toán nốt)</p>
+                    </div>
+                    <form id="payForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>ID Nhân viên</label>
+                                <input type="text" id="payEmpId" value="phucnd" list="employeeSuggestions" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Số tiền trả (₫)</label>
+                                <input type="number" id="payAmount" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Ngày thanh toán</label>
+                                <input type="date" id="payDate" required>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Ghi chú</label>
+                                <input type="text" id="payNotes" placeholder="VD: Thanh toán lương tháng 6">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Thanh Toán Ngay</button>
+                    </form>
+                    <div id="payResult" class="result-box hidden"></div>
+                </section>
+            </div>
+
+            <!-- TRANG 2.5: DANH SÁCH NHÂN VIÊN -->
+            <div id="employees-page" class="page-section">
+                <section class="glass-card full-width">
+                    <div class="card-header">
+                        <h2>Tổng Quan Tất Cả Nhân Viên</h2>
+                        <p>Tra cứu nhanh tổng lương, tiền đã ứng và thực nhận của toàn bộ nhân viên trong tháng</p>
+                    </div>
+                    <form id="employeesForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Tháng</label>
+                                <input type="number" id="empMonth" value="6" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Năm</label>
+                                <input type="number" id="empYear" value="2026" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="background: var(--primary);">Xem Danh Sách</button>
+                    </form>
+                    <div id="employeesResult" class="result-box hidden"></div>
+                    
+                    <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 2.5rem 0 1.5rem 0;">
+                    
+                    <div class="card-header" style="margin-bottom: 1.5rem;">
+                        <h2 style="font-size: 1.25rem;">Thêm Nhân Viên Mới</h2>
+                        <p>Thêm nhân viên vào hệ thống để có thể chọn khi tạo ca làm việc</p>
+                    </div>
+                    <form id="createEmpForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Mã Nhân Viên (ID)</label>
+                                <input type="text" id="newEmpId" placeholder="VD: phucnd" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Họ và Tên</label>
+                                <input type="text" id="newEmpName" placeholder="Nhập họ tên nhân viên" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Số điện thoại</label>
+                                <input type="text" id="newEmpPhone" placeholder="Tùy chọn">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Tạo Nhân Viên</button>
+                    </form>
+                    <div id="createEmpResult" class="result-box hidden"></div>
+                </section>
+            </div>
+
+            <!-- TRANG 3: TỔNG KẾT CA -->
+            <div id="summary-page" class="page-section">
+                <section class="glass-card full-width">
+                    <div class="card-header">
+                        <h2>Tổng Kết Ca Làm Việc</h2>
+                        <p>Tra cứu doanh thu, lương và tiền cắt của một ca cụ thể</p>
+                    </div>
+                    <form id="summaryForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col" style="flex: 1;">
+                                <label>ID Ca làm việc (Ví dụ: 7)</label>
+                                <input type="number" id="scheduleId" value="7" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-secondary">Xem Tổng Kết Ca</button>
+                    </form>
+                    <div id="summaryResult" class="result-box hidden"></div>
+                </section>
+            </div>
+
+            <!-- TRANG 4: TẠO CA MỚI -->
+            <div id="create-page" class="page-section">
+                <section class="glass-card full-width">
+                    <div class="card-header">
+                        <h2>Tạo Ca Làm Việc Mới</h2>
+                        <p>Thêm ca làm việc và danh sách nhân viên tham gia</p>
+                    </div>
+                    <form id="createScheduleForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Ngày làm</label>
+                                <input type="date" id="workDate" value="2026-06-05" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Ca</label>
+                                <select id="shift">
+                                    <option value="SÁNG">SÁNG</option>
+                                    <option value="CHIỀU">CHIỀU</option>
+                                    <option value="TỐI">TỐI</option>
+                                </select>
+                            </div>
+                            <div class="input-col">
+                                <label>Địa điểm</label>
+                                <select id="locationId" required>
+                                    <option value="">Đang tải...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Đơn giá</label>
+                                <input type="number" id="unitPrice" value="300000" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Số lượng</label>
+                                <input type="number" id="quantity" value="5" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Trạng thái</label>
+                                <select id="paymentStatus">
+                                    <option value="CHƯA NHẬN">CHƯA NHẬN</option>
+                                    <option value="ĐÃ NHẬN">ĐÃ NHẬN</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Số lượng NV thuê ngoài</label>
+                                <input type="number" id="casualWorkerCount" value="0" min="0" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Tổng lương NV Thuê Ngoài</label>
+                                <input type="number" id="casualWage" placeholder="Ví dụ: 150000" value="0">
+                            </div>
+                        </div>
+
+                        <div class="employees-section">
+                            <h3>Nhân viên tham gia</h3>
+                            <div id="employeeList">
+                                <!-- Auto-generated rows will appear here -->
+                            </div>
+                            <div id="liveTotalWage" style="font-weight: bold; margin-top: 1rem; color: #a855f7; font-size: 1.1rem;">Tổng lương NV trong đám: <span class="format-money">0 ₫</span></div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="margin-top: 1.5rem; width: 100%;">Tạo Ca Mới</button>
+                    </form>
+                    <div id="createResult" class="result-box hidden"></div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL CHI TIẾT CA LÀM VIỆC -->
+    <div id="scheduleModal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <span class="close-btn" onclick="document.getElementById('scheduleModal').classList.add('hidden')">&times;</span>
+            <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Chi Tiết Ca Làm Việc <span id="modalScheduleId"></span></h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <style>
+        .modal {
+            position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal.hidden { display: none; }
+        .modal-content {
+            background: var(--bg-surface);
+            padding: 2rem; border-radius: 1rem;
+            width: 90%; max-width: 600px;
+            position: relative;
+        }
+        .close-btn {
+            color: var(--text-secondary); position: absolute;
+            top: 1rem; right: 1.5rem; font-size: 28px; font-weight: bold; cursor: pointer;
+        }
+        .close-btn:hover { color: white; }
+    </style>
+
+    <datalist id="employeeSuggestions"></datalist>
+
+    <script src="app.js"></script>
+</body>
+</html>
