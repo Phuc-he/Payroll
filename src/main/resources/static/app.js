@@ -37,8 +37,41 @@ async function loadEmployees() {
     }
 }
 
+// Khởi tạo ngày tháng mặc định là tháng hiện tại
+const now = new Date();
+const currentMonth = now.getMonth() + 1;
+const currentYear = now.getFullYear();
+
+['overviewMonth', 'empMonth', 'month'].forEach(id => {
+    if(document.getElementById(id)) document.getElementById(id).value = currentMonth;
+});
+['overviewYear', 'empYear', 'year'].forEach(id => {
+    if(document.getElementById(id)) document.getElementById(id).value = currentYear;
+});
+
 loadLocations();
 loadEmployees();
+
+// ==========================================
+// REFRESH ALL DATA LOGIC
+// ==========================================
+window.refreshAllData = function() {
+    loadLocations();
+    loadEmployees();
+    
+    // Refresh Overview
+    if (document.getElementById('overviewMonth') && document.getElementById('overviewMonth').value) {
+        document.getElementById('overviewForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+    // Refresh Employee list
+    if (document.getElementById('empMonth') && document.getElementById('empMonth').value) {
+        document.getElementById('employeesForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+    // Refresh Payroll details
+    if (document.getElementById('empId') && document.getElementById('empId').value) {
+        document.getElementById('payrollForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+};
 
 // ==========================================
 // NAVIGATION LOGIC
@@ -194,8 +227,8 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                 try {
                     const updateRes = await fetch(`${API_BASE}/work-schedules/${scheduleId}/status?status=${newStatus}`, { method: 'PUT' });
                     if (!updateRes.ok) throw new Error('Không thể cập nhật trạng thái');
-                    // Reload lại dữ liệu tổng quan
-                    document.getElementById('overviewForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    // Reload lại toàn bộ dữ liệu
+                    refreshAllData();
                 } catch (err) {
                     alert('Lỗi cập nhật trạng thái: ' + err.message);
                 }
@@ -323,11 +356,8 @@ document.getElementById('createEmpForm').addEventListener('submit', async (e) =>
         document.getElementById('newEmpName').value = '';
         document.getElementById('newEmpPhone').value = '';
         
-        // Cập nhật lại danh sách nếu đang xem
-        document.getElementById('employeesForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-        
-        // Cập nhật lại danh sách gợi ý ID
-        loadEmployees();
+        // Cập nhật lại toàn bộ dữ liệu
+        refreshAllData();
     } catch (error) {
         resultBox.innerHTML = `<p style="color: var(--danger)">${error.message}</p>`;
         resultBox.classList.remove('hidden');
@@ -459,10 +489,8 @@ document.getElementById('payForm').addEventListener('submit', async (e) => {
         `;
         resultBox.classList.remove('hidden');
         
-        // Cập nhật lại Báo Cáo Lương nếu đang xem đúng nhân viên đó
-        if (document.getElementById('empId').value == payload.employeeId) {
-            document.getElementById('payrollForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-        }
+        // Cập nhật lại toàn bộ dữ liệu
+        refreshAllData();
         
         // Clear input
         document.getElementById('payAmount').value = '';
@@ -632,8 +660,8 @@ window.deleteWorkSchedule = async function(id) {
         
         alert('Đã xóa thành công ca làm việc #' + id);
         
-        // Tải lại bảng Tổng Quan nếu đang mở
-        document.getElementById('overviewForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        // Tải lại toàn bộ dữ liệu
+        refreshAllData();
     } catch (e) {
         alert('Lỗi: ' + e.message);
     }
@@ -756,9 +784,29 @@ document.getElementById('createScheduleForm').addEventListener('submit', async (
             generateEmployeeRows();
         }
         
+        // Cập nhật lại toàn bộ dữ liệu để load ca mới hoặc ca vừa sửa
+        refreshAllData();
+        
         resultBox.classList.remove('hidden');
     } catch (error) {
         resultBox.innerHTML = `<p style="color: var(--danger)">${error.message}</p>`;
         resultBox.classList.remove('hidden');
     }
 });
+
+// Tự động tải dữ liệu sau khi tất cả sự kiện đã được gán
+function autoLoadData() {
+    setTimeout(() => {
+        const overviewForm = document.getElementById('overviewForm');
+        if (overviewForm) overviewForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        
+        const empForm = document.getElementById('employeesForm');
+        if (empForm) empForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }, 100);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoLoadData);
+} else {
+    autoLoadData();
+}
