@@ -17,4 +17,10 @@ public class Employee {
     private String fullName;
     private String phoneNumber;
     private Boolean isActive;
+    
+    private String password;
+    private String role; // "ROLE_ADMIN" or "ROLE_USER"
+    
+    @Column(name = "is_first_login", columnDefinition = "boolean default true")
+    private Boolean isFirstLogin;
 }

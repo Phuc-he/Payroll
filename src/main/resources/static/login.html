@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phúc Quân HR - Đăng Nhập</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            padding: 3rem 2.5rem;
+            text-align: center;
+            border-top: 5px solid var(--primary);
+        }
+        .login-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 2.5rem;
+        }
+        .login-form {
+            text-align: left;
+        }
+        .login-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .login-form input {
+            width: 100%;
+            margin-bottom: 1.5rem;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+        .error-message {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card login-card">
+        <div class="login-logo">✨</div>
+        <h1 class="login-title">Phúc Quân HR</h1>
+        <p class="login-subtitle">Hệ thống quản lý ca làm việc và tính lương</p>
+        
+        <div id="errorBox" class="error-message">
+            Tài khoản hoặc mật khẩu không chính xác!
+        </div>
+
+        <form class="login-form" action="/login" method="POST">
+            <label for="username">Mã Nhân Viên / Tên Đăng Nhập</label>
+            <input type="text" id="username" name="username" placeholder="Nhập mã của bạn (VD: phucnd)" required autofocus>
+            
+            <label for="password">Mật Khẩu</label>
+            <input type="password" id="password" name="password" placeholder="Nhập mật khẩu..." required>
+            
+            <button type="submit" class="btn-primary login-btn">Đăng Nhập</button>
+        </form>
+    </div>
+
+    <script>
+        // Check URL for error parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('error')) {
+            document.getElementById('errorBox').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

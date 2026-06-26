@@ -838,8 +838,79 @@ function autoLoadData() {
     }, 100);
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoLoadData);
-} else {
+let currentUser = null;
+
+async function checkAuthAndLoadData() {
+    try {
+        const authRes = await fetch(`${API_BASE}/auth/me`);
+        if (authRes.ok) {
+            currentUser = await authRes.json();
+            applyRoleBasedUI(currentUser);
+        }
+    } catch (e) {
+        console.error("Lỗi xác thực:", e);
+    }
     autoLoadData();
+}
+
+function applyRoleBasedUI(user) {
+    if (!user || !user.roles) return;
+    
+    const isAdmin = user.roles.includes('ROLE_ADMIN');
+    
+    if (!isAdmin) {
+        // ... (admin tabs hiding)
+        if(document.getElementById('menu-overview')) document.getElementById('menu-overview').style.display = 'none';
+        if(document.getElementById('menu-employees')) document.getElementById('menu-employees').style.display = 'none';
+        if(document.getElementById('menu-schedules')) document.getElementById('menu-schedules').style.display = 'none';
+        if(document.getElementById('menu-create')) document.getElementById('menu-create').style.display = 'none';
+        
+        // Hide Payment Section
+        const paySection = document.getElementById('pay-section');
+        if (paySection) paySection.style.display = 'none';
+        
+        // Auto-fill empId in Salary Report and disable it
+        const empIdInput = document.getElementById('empId');
+        if (empIdInput) {
+            empIdInput.value = user.username;
+            empIdInput.readOnly = true;
+            empIdInput.style.background = 'rgba(0,0,0,0.3)';
+            empIdInput.style.cursor = 'not-allowed';
+        }
+        
+        // Switch to Salary Report tab by default since others are hidden
+        if(document.getElementById('menu-payroll')) document.getElementById('menu-payroll').click();
+    }
+    
+    // Check if First Login
+    if (user.isFirstLogin === true) {
+        document.getElementById('changePasswordModal').style.display = 'flex';
+        
+        document.getElementById('btnChangePassword').addEventListener('click', async () => {
+            const newPwd = document.getElementById('newPasswordInput').value;
+            if (!newPwd || newPwd.trim().length < 4) {
+                alert('Vui lòng nhập mật khẩu hợp lệ (ít nhất 4 ký tự)');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/auth/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newPassword: newPwd })
+                });
+                if (!res.ok) throw new Error('Không thể đổi mật khẩu');
+                
+                alert('Đổi mật khẩu thành công! Hệ thống đã ghi nhận.');
+                document.getElementById('changePasswordModal').style.display = 'none';
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAuthAndLoadData);
+} else {
+    checkAuthAndLoadData();
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll & Shift Management</title>
+    <title>Phúc Quân HR</title>
     <link rel="icon" href="favicon.png?v=2">
     <link rel="stylesheet" href="style.css?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,26 +25,39 @@
     </div>
 
     <div class="app-layout">
+        <!-- MODAL ĐỔI MẬT KHẨU -->
+        <div id="changePasswordModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+            <div class="glass-card" style="width: 400px; padding: 2rem; border-top: 4px solid var(--primary);">
+                <h2 style="margin-bottom: 1rem; color: white;">Chào mừng bạn mới!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Bạn đang đăng nhập bằng mật khẩu mặc định. Để bảo mật tài khoản cá nhân, vui lòng tạo mật khẩu mới để tiếp tục sử dụng hệ thống.</p>
+                <div class="input-col" style="margin-bottom: 1.5rem;">
+                    <label>Mật khẩu mới</label>
+                    <input type="password" id="newPasswordInput" placeholder="Nhập mật khẩu mới..." required style="width: 100%">
+                </div>
+                <button type="button" class="btn-primary" id="btnChangePassword" style="width: 100%;">Lưu mật khẩu & Bắt đầu</button>
+            </div>
+        </div>
+        
         <!-- SIDEBAR -->
         <aside class="sidebar glass-panel">
             <div class="logo">
                 <div class="logo-icon">✨</div>
-                <h1>Smart Payroll</h1>
+                <h1>Phúc Quân HR</h1>
             </div>
             <nav class="nav-menu">
-                <button class="nav-item active" data-target="overview-page">
+                <button class="nav-item active" data-target="overview-page" id="menu-overview">
                     <span class="icon">📊</span> Tổng Quan Tháng
                 </button>
-                <button class="nav-item" data-target="payroll-page">
+                <button class="nav-item" data-target="payroll-page" id="menu-payroll">
                     <span class="icon">💰</span> Báo Cáo Lương
                 </button>
-                <button class="nav-item" data-target="employees-page">
+                <button class="nav-item" data-target="employees-page" id="menu-employees">
                     <span class="icon">👥</span> Danh Sách NV
                 </button>
-                <button class="nav-item" data-target="summary-page">
+                <button class="nav-item" data-target="summary-page" id="menu-schedules">
                     <span class="icon">📋</span> Tổng Kết Ca
                 </button>
-                <button class="nav-item" data-target="create-page">
+                <button class="nav-item" data-target="create-page" id="menu-create">
                     <span class="icon">➕</span> Tạo Ca Mới
                 </button>
             </nav>
@@ -105,34 +118,36 @@
                     
                     <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 2.5rem 0 1.5rem 0;">
                     
-                    <div class="card-header" style="margin-bottom: 1.5rem;">
-                        <h2 style="font-size: 1.25rem;">Thanh Toán / Ứng Lương</h2>
-                        <p>Nhập số tiền muốn trả cho nhân viên (Ứng trước hoặc Thanh toán nốt)</p>
+                    <div id="pay-section">
+                        <div class="card-header" style="margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.25rem;">Thanh Toán / Ứng Lương</h2>
+                            <p>Nhập số tiền muốn trả cho nhân viên (Ứng trước hoặc Thanh toán nốt)</p>
+                        </div>
+                        <form id="payForm" class="form-group">
+                            <div class="input-row">
+                                <div class="input-col">
+                                    <label>ID Nhân viên</label>
+                                    <input type="text" id="payEmpId" value="phucnd" list="employeeSuggestions" required>
+                                </div>
+                                <div class="input-col">
+                                    <label>Số tiền trả (₫)</label>
+                                    <input type="number" id="payAmount" required>
+                                </div>
+                                <div class="input-col">
+                                    <label>Ngày thanh toán</label>
+                                    <input type="date" id="payDate" required>
+                                </div>
+                            </div>
+                            <div class="input-row">
+                                <div class="input-col">
+                                    <label>Ghi chú</label>
+                                    <input type="text" id="payNotes" placeholder="VD: Thanh toán lương tháng 6">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Thanh Toán Ngay</button>
+                        </form>
+                        <div id="payResult" class="result-box hidden"></div>
                     </div>
-                    <form id="payForm" class="form-group">
-                        <div class="input-row">
-                            <div class="input-col">
-                                <label>ID Nhân viên</label>
-                                <input type="text" id="payEmpId" value="phucnd" list="employeeSuggestions" required>
-                            </div>
-                            <div class="input-col">
-                                <label>Số tiền trả (₫)</label>
-                                <input type="number" id="payAmount" required>
-                            </div>
-                            <div class="input-col">
-                                <label>Ngày thanh toán</label>
-                                <input type="date" id="payDate" required>
-                            </div>
-                        </div>
-                        <div class="input-row">
-                            <div class="input-col">
-                                <label>Ghi chú</label>
-                                <input type="text" id="payNotes" placeholder="VD: Thanh toán lương tháng 6">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Thanh Toán Ngay</button>
-                    </form>
-                    <div id="payResult" class="result-box hidden"></div>
                 </section>
             </div>
 
