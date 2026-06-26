@@ -145,12 +145,30 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                                 isEvenDay = !isEvenDay;
                             }
                             const rowClass = isEvenDay ? 'alt-row' : '';
+                            
+                            const shiftColors = {
+                                'SÁNG': 'background: rgba(250, 204, 21, 0.2); color: #fde047;',
+                                'CHIỀU': 'background: rgba(56, 189, 248, 0.2); color: #7dd3fc;',
+                                'TỐI': 'background: rgba(168, 85, 247, 0.2); color: #d8b4fe;'
+                            };
+                            
+                            const locationColors = {
+                                'Cát Quế': 'background: rgba(139, 92, 246, 0.2); color: #a78bfa;',
+                                'Thực Dung': 'background: rgba(20, 184, 166, 0.2); color: #5eead4;',
+                                'Yên Sở': 'background: rgba(249, 115, 22, 0.2); color: #fdba74;'
+                            };
+                            
+                            const shiftStyle = shiftColors[s.shift] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;';
+                            const locStyle = s.locationName ? (locationColors[s.locationName] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;') : '';
+                            
+                            const locHtml = s.locationName ? `<span style="${locStyle} padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${s.locationName}</span>` : '';
+                            
                             return `
                             <tr class="${rowClass}">
                                 <td>#${s.id}</td>
                                 <td>${s.workDate}</td>
-                                <td><span style="background: rgba(45,212,191,0.2); padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${s.shift}</span></td>
-                                <td style="font-size: 0.85rem; color: var(--text-secondary);">${s.locationName || ''}</td>
+                                <td><span style="${shiftStyle} padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${s.shift}</span></td>
+                                <td>${locHtml}</td>
                                 <td class="format-money text-right" style="color: #818cf8">${formatMoney(s.luongNhanVien)}</td>
                                 <td class="text-center" style="font-weight: bold;">${s.casualWorkerCount || 0}</td>
                                 <td class="format-money text-right" style="color: #fb7185">${formatMoney(s.casualWage)}</td>
@@ -227,10 +245,17 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                 try {
                     const updateRes = await fetch(`${API_BASE}/work-schedules/${scheduleId}/status?status=${newStatus}`, { method: 'PUT' });
                     if (!updateRes.ok) throw new Error('Không thể cập nhật trạng thái');
-                    // Reload lại toàn bộ dữ liệu
-                    refreshAllData();
+                    
+                    // Chỉ đổi màu chữ trên UI, KHÔNG reload lại toàn bộ trang
+                    if (newStatus === 'ĐÃ NHẬN') {
+                        event.target.style.color = 'var(--success)';
+                    } else {
+                        event.target.style.color = 'var(--danger)';
+                    }
                 } catch (err) {
-                    alert('Lỗi cập nhật trạng thái: ' + err.message);
+                    alert(err.message);
+                    // Đảo ngược lại giá trị nếu lỗi
+                    event.target.value = newStatus === 'ĐÃ NHẬN' ? 'CHƯA NHẬN' : 'ĐÃ NHẬN';
                 }
             });
         });
@@ -391,13 +416,21 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
                         </tr>
                     </thead>
                     <tbody>
-                        ${data.workDetails.map(d => `
+                        ${data.workDetails.map(d => {
+                            const shiftColors = {
+                                'SÁNG': 'background: rgba(250, 204, 21, 0.2); color: #fde047;',
+                                'CHIỀU': 'background: rgba(56, 189, 248, 0.2); color: #7dd3fc;',
+                                'TỐI': 'background: rgba(168, 85, 247, 0.2); color: #d8b4fe;'
+                            };
+                            const shiftStyle = shiftColors[d.shift] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;';
+                            return `
                             <tr>
                                 <td>${d.workDate}</td>
-                                <td><span style="background: rgba(99,102,241,0.2); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">${d.shift}</span></td>
+                                <td><span style="${shiftStyle} padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${d.shift}</span></td>
                                 <td class="format-money">${formatMoney(d.wage)}</td>
                             </tr>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;

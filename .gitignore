@@ -1,0 +1,12 @@
+# Chặn toàn bộ thư mục target chứa code đã biên dịch
+target/
+
+# Chặn các file cấu hình của IDE (IntelliJ, Eclipse,...)
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# Chặn các file log hệ thống sinh ra khi chạy
+*.log
