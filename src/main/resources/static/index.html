@@ -54,8 +54,11 @@
                 <button class="nav-item" data-target="employees-page" id="menu-employees">
                     <span class="icon">👥</span> Danh Sách NV
                 </button>
-                <button class="nav-item" data-target="summary-page" id="menu-schedules">
+                <button class="nav-item" data-target="schedules-page" id="menu-schedules">
                     <span class="icon">📋</span> Tổng Kết Ca
+                </button>
+                <button class="nav-item" data-target="advance-requests-page" id="menu-advance-requests">
+                    <span class="icon">💸</span> Xin Ứng Lương
                 </button>
                 <button class="nav-item" data-target="create-page" id="menu-create">
                     <span class="icon">➕</span> Tạo Ca Mới
@@ -290,6 +293,54 @@
                 </section>
             </div>
 
+            <!-- ==========================================
+                 ADVANCE REQUESTS PAGE
+                 ========================================== -->
+            <div id="advance-requests-page" class="page-section">
+                <section class="full-width">
+                    <div class="card-header" style="margin-bottom: 2rem;">
+                        <h2>Yêu Cầu Ứng Lương</h2>
+                        <p>Quản lý các yêu cầu tạm ứng lương</p>
+                    </div>
+
+                    <!-- EMPLOYEE FORM -->
+                    <div id="advanceRequestFormContainer" style="display: none; margin-bottom: 2rem; background: rgba(168,85,247,0.05); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(168,85,247,0.2);">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary);">Tạo Yêu Cầu Ứng Lương</h3>
+                        <form id="advanceRequestForm" class="form-group">
+                            <div class="input-row">
+                                <div class="input-col">
+                                    <label>Số tiền muốn ứng (VNĐ)</label>
+                                    <input type="number" id="requestAmount" required placeholder="VD: 500000" min="10000">
+                                </div>
+                                <div class="input-col">
+                                    <label>Lý do</label>
+                                    <input type="text" id="requestReason" required placeholder="VD: Đổ xăng, sửa xe...">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top: 1rem; width: 100%;">Gửi Yêu Cầu</button>
+                        </form>
+                    </div>
+
+                    <!-- REQUESTS TABLE -->
+                    <div class="glass-card table-responsive">
+                        <table class="dates-table" id="advanceRequestsTable">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Nhân viên</th>
+                                    <th>Số tiền</th>
+                                    <th>Lý do</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
         </main>
     </div>
 

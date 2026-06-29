@@ -58,6 +58,7 @@ loadEmployees();
 window.refreshAllData = function() {
     loadLocations();
     loadEmployees();
+    loadAdvanceRequests();
     
     // Refresh Overview
     if (document.getElementById('overviewMonth') && document.getElementById('overviewMonth').value) {
@@ -850,8 +851,105 @@ async function checkAuthAndLoadData() {
     } catch (e) {
         console.error("Lỗi xác thực:", e);
     }
-    autoLoadData();
+    refreshAllData();
 }
+
+// ==========================================
+// ADVANCE REQUESTS LOGIC
+// ==========================================
+async function loadAdvanceRequests() {
+    try {
+        const endpoint = currentUser && currentUser.roles.includes('ROLE_ADMIN') ? '' : '/me';
+        const res = await fetch(`${API_BASE}/advance-requests${endpoint}`);
+        if (!res.ok) throw new Error('Không thể tải yêu cầu ứng lương');
+        const requests = await res.json();
+        
+        const tbody = document.querySelector('#advanceRequestsTable tbody');
+        if (requests.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Chưa có yêu cầu ứng lương nào.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = requests.map(req => {
+            const dateStr = new Date(req.requestDate).toLocaleString('vi-VN');
+            const empName = req.employee ? `${req.employee.fullName} (${req.employee.id})` : '';
+            
+            let statusHtml = '';
+            if (req.status === 'PENDING') statusHtml = '<span style="color: #f59e0b; font-weight: bold;">Đang xử lý</span>';
+            else if (req.status === 'PAID') statusHtml = '<span style="color: var(--success); font-weight: bold;">Đã thanh toán</span>';
+            else if (req.status === 'REJECTED') statusHtml = '<span style="color: var(--danger); font-weight: bold;">Đã từ chối</span>';
+                
+            let actionHtml = '-';
+            if (req.status === 'PENDING' && currentUser && currentUser.roles.includes('ROLE_ADMIN')) {
+                actionHtml = `
+                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: var(--success);" onclick="payAdvanceRequest(${req.id})">Thanh toán</button>
+                        <button class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: var(--danger);" onclick="rejectAdvanceRequest(${req.id})">Từ chối</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <tr>
+                    <td>${dateStr}</td>
+                    <td>${empName}</td>
+                    <td class="format-money">${formatMoney(req.amount)}</td>
+                    <td>${req.reason}</td>
+                    <td>${statusHtml}</td>
+                    <td>${actionHtml}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+document.getElementById('advanceRequestForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amount = document.getElementById('requestAmount').value;
+    const reason = document.getElementById('requestReason').value;
+    
+    try {
+        const res = await fetch(`${API_BASE}/advance-requests`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: parseFloat(amount), reason })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        alert('Đã gửi yêu cầu ứng lương thành công!');
+        document.getElementById('advanceRequestForm').reset();
+        loadAdvanceRequests();
+    } catch (err) {
+        alert('Lỗi: ' + err.message);
+    }
+});
+
+window.payAdvanceRequest = async function(id) {
+    if(!confirm('Xác nhận đã thanh toán số tiền này cho nhân viên?')) return;
+    try {
+        const res = await fetch(`${API_BASE}/advance-requests/${id}/pay`, { method: 'PUT' });
+        if (!res.ok) throw new Error(await res.text());
+        alert('Đã cập nhật trạng thái thanh toán thành công!');
+        loadAdvanceRequests();
+    } catch (err) {
+        alert('Lỗi: ' + err.message);
+    }
+};
+
+window.rejectAdvanceRequest = async function(id) {
+    const reason = prompt('Nhập lý do từ chối (Không bắt buộc):');
+    if(reason === null) return; // User cancelled
+    
+    try {
+        const res = await fetch(`${API_BASE}/advance-requests/${id}/reject`, { method: 'PUT' });
+        if (!res.ok) throw new Error(await res.text());
+        alert('Đã từ chối yêu cầu ứng lương này!');
+        loadAdvanceRequests();
+    } catch (err) {
+        alert('Lỗi: ' + err.message);
+    }
+};
 
 function applyRoleBasedUI(user) {
     if (!user || !user.roles) return;
@@ -880,6 +978,9 @@ function applyRoleBasedUI(user) {
         
         // Switch to Salary Report tab by default since others are hidden
         if(document.getElementById('menu-payroll')) document.getElementById('menu-payroll').click();
+        
+        // Show advance request form for users
+        if(document.getElementById('advanceRequestFormContainer')) document.getElementById('advanceRequestFormContainer').style.display = 'block';
     }
     
     // Check if First Login
