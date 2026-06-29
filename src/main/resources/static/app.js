@@ -479,7 +479,11 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
                     onclick="showQrModal(${bName}, ${bAcc}, ${data.actualReceived}, 'Thanh toan luong ${empId}', () => { 
                         document.getElementById('payAmount').value = ${data.actualReceived};
                         document.getElementById('payNotes').value = 'Thanh toán lương tháng ${month}/${year}';
-                        window.scrollTo({ top: document.getElementById('payForm').offsetTop, behavior: 'smooth' });
+                        document.getElementById('payForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                        setTimeout(() => {
+                            document.getElementById('payrollForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 500);
                     })">
                     <span class="icon">📱</span> Hiển Thị Mã QR Thanh Toán
                 </button>
@@ -1016,8 +1020,18 @@ function applyRoleBasedUI(user) {
     }
     
     // Profile Info
-    if (user.bankName) document.getElementById('myBankName').value = user.bankName;
-    if (user.bankAccountNumber) document.getElementById('myBankAcc').value = user.bankAccountNumber;
+    function renderMyQr(bName, bAcc) {
+        if (bName && bAcc) {
+            document.getElementById('myBankName').value = bName;
+            document.getElementById('myBankAcc').value = bAcc;
+            document.getElementById('myQrImg').src = `https://img.vietqr.io/image/${bName}-${bAcc}-compact2.png`;
+            document.getElementById('myQrPreview').style.display = 'block';
+        }
+    }
+    
+    if (user.bankName && user.bankAccountNumber) {
+        renderMyQr(user.bankName, user.bankAccountNumber);
+    }
     
     document.getElementById('profileForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1031,6 +1045,9 @@ function applyRoleBasedUI(user) {
             });
             if (!res.ok) throw new Error('Không thể cập nhật ngân hàng');
             alert('Cập nhật tài khoản ngân hàng thành công!');
+            currentUser.bankName = bankName;
+            currentUser.bankAccountNumber = bankAccountNumber;
+            renderMyQr(bankName, bankAccountNumber);
         } catch (err) {
             alert('Lỗi: ' + err.message);
         }
