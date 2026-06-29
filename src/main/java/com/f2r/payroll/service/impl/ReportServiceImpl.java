@@ -38,7 +38,7 @@ public class ReportServiceImpl implements ReportService {
     @Transactional(readOnly = true)
     public MonthlyPayrollResponse calculateMonthlyPayroll(String employeeId, int month, int year) {
         // Verify employee exists
-        employeeRepository.findById(employeeId)
+        Employee emp = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         BigDecimal totalWage = timesheetRepository.sumWageByEmployeeAndMonth(employeeId, month, year);
@@ -105,6 +105,8 @@ public class ReportServiceImpl implements ReportService {
                 .totalWage(totalWage)
                 .totalAdvance(totalAdvance)
                 .actualReceived(actualReceived)
+                .bankName(emp.getBankName())
+                .bankAccountNumber(emp.getBankAccountNumber())
                 .workDetails(workDetails)
                 .advanceDetails(advanceDetails)
                 .build();

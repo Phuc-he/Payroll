@@ -357,6 +357,8 @@ document.getElementById('createEmpForm').addEventListener('submit', async (e) =>
         id: document.getElementById('newEmpId').value,
         fullName: document.getElementById('newEmpName').value,
         phoneNumber: document.getElementById('newEmpPhone').value,
+        bankName: document.getElementById('newEmpBankName').value,
+        bankAccountNumber: document.getElementById('newEmpBankAcc').value,
         isActive: true
     };
     
@@ -468,13 +470,30 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
 
         const isNegative = data.actualReceived < 0;
 
+        let qrBtnHtml = '';
+        if (data.actualReceived > 0 && currentUser && currentUser.roles.includes('ROLE_ADMIN')) {
+            const bName = data.bankName ? `'${data.bankName}'` : 'null';
+            const bAcc = data.bankAccountNumber ? `'${data.bankAccountNumber}'` : 'null';
+            qrBtnHtml = `
+                <button type="button" class="btn-primary" style="background: var(--primary); margin-top: 1rem;" 
+                    onclick="showQrModal(${bName}, ${bAcc}, ${data.actualReceived}, 'Thanh toan luong ${empId}', () => { 
+                        document.getElementById('payAmount').value = ${data.actualReceived};
+                        document.getElementById('payNotes').value = 'Thanh toán lương tháng ${month}/${year}';
+                        window.scrollTo({ top: document.getElementById('payForm').offsetTop, behavior: 'smooth' });
+                    })">
+                    <span class="icon">📱</span> Hiển Thị Mã QR Thanh Toán
+                </button>
+            `;
+        }
+
         resultBox.innerHTML = `
             <div class="result-item"><span>Tổng Lương (Từ các ca):</span> <span class="format-money">${formatMoney(data.totalWage)}</span></div>
             <div class="result-item"><span>Đã Tạm Ứng:</span> <span class="format-money">${formatMoney(data.totalAdvance)}</span></div>
-            <div class="result-item highlight ${isNegative ? 'danger' : ''}">
+            <div class="result-item highlight ${isNegative ? 'danger' : ''}" style="display: flex; justify-content: space-between; align-items: center;">
                 <span>Thực Nhận:</span> 
                 <span class="format-money">${formatMoney(data.actualReceived)}</span>
             </div>
+            ${qrBtnHtml}
             ${datesHtml}
             ${advancesHtml}
         `;
@@ -881,9 +900,11 @@ async function loadAdvanceRequests() {
                 
             let actionHtml = '-';
             if (req.status === 'PENDING' && currentUser && currentUser.roles.includes('ROLE_ADMIN')) {
+                const bName = req.employee && req.employee.bankName ? `'${req.employee.bankName}'` : 'null';
+                const bAcc = req.employee && req.employee.bankAccountNumber ? `'${req.employee.bankAccountNumber}'` : 'null';
                 actionHtml = `
                     <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                        <button class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: var(--success);" onclick="payAdvanceRequest(${req.id})">Thanh toán</button>
+                        <button class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: var(--success);" onclick="payAdvanceRequest(${req.id}, ${bName}, ${bAcc}, ${req.amount}, '${empName}')">Thanh toán</button>
                         <button class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: var(--danger);" onclick="rejectAdvanceRequest(${req.id})">Từ chối</button>
                     </div>
                 `;
@@ -925,8 +946,19 @@ document.getElementById('advanceRequestForm').addEventListener('submit', async (
     }
 });
 
-window.payAdvanceRequest = async function(id) {
-    if(!confirm('Xác nhận đã thanh toán số tiền này cho nhân viên?')) return;
+window.payAdvanceRequest = async function(id, bankId, accountNo, amount, empName) {
+    if (!bankId || !accountNo) {
+        if(!confirm(`Xác nhận đã thanh toán bằng TIỀN MẶT số tiền ${formatMoney(amount)} cho ${empName}?`)) return;
+        executePay(id);
+    } else {
+        const content = `Tam ung luong ${empName}`;
+        showQrModal(bankId, accountNo, amount, content, () => {
+            executePay(id);
+        });
+    }
+};
+
+async function executePay(id) {
     try {
         const res = await fetch(`${API_BASE}/advance-requests/${id}/pay`, { method: 'PUT' });
         if (!res.ok) throw new Error(await res.text());
@@ -935,7 +967,7 @@ window.payAdvanceRequest = async function(id) {
     } catch (err) {
         alert('Lỗi: ' + err.message);
     }
-};
+}
 
 window.rejectAdvanceRequest = async function(id) {
     const reason = prompt('Nhập lý do từ chối (Không bắt buộc):');
@@ -983,6 +1015,27 @@ function applyRoleBasedUI(user) {
         if(document.getElementById('advanceRequestFormContainer')) document.getElementById('advanceRequestFormContainer').style.display = 'block';
     }
     
+    // Profile Info
+    if (user.bankName) document.getElementById('myBankName').value = user.bankName;
+    if (user.bankAccountNumber) document.getElementById('myBankAcc').value = user.bankAccountNumber;
+    
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const bankName = document.getElementById('myBankName').value;
+        const bankAccountNumber = document.getElementById('myBankAcc').value;
+        try {
+            const res = await fetch(`${API_BASE}/employees/me/bank`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bankName, bankAccountNumber })
+            });
+            if (!res.ok) throw new Error('Không thể cập nhật ngân hàng');
+            alert('Cập nhật tài khoản ngân hàng thành công!');
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        }
+    });
+
     // Check if First Login
     if (user.isFirstLogin === true) {
         document.getElementById('changePasswordModal').style.display = 'flex';
@@ -1009,6 +1062,45 @@ function applyRoleBasedUI(user) {
         });
     }
 }
+
+// ==========================================
+// QR CODE LOGIC
+// ==========================================
+window.showQrModal = function(bankId, accountNo, amount, content, onConfirm) {
+    const modal = document.getElementById('qrModal');
+    const contentDiv = document.getElementById('qrContent');
+    const confirmBtn = document.getElementById('confirmQrPayBtn');
+    
+    if (!bankId || !accountNo) {
+        contentDiv.innerHTML = `
+            <div style="padding: 2rem 0; color: var(--danger);">
+                <span style="font-size: 3rem;">⚠️</span>
+                <p style="margin-top: 1rem;">Nhân viên này chưa được cập nhật thông tin Ngân hàng!</p>
+            </div>
+        `;
+        confirmBtn.style.display = 'none';
+    } else {
+        const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
+        contentDiv.innerHTML = `
+            <img src="${qrUrl}" style="width: 100%; max-width: 300px; border-radius: 1rem; border: 2px solid rgba(255,255,255,0.1);">
+            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; width: 100%; text-align: left;">
+                <p style="margin: 0.25rem 0; color: var(--text-secondary); font-size: 0.9rem;">Ngân hàng: <strong style="color: white;">${bankId.toUpperCase()}</strong></p>
+                <p style="margin: 0.25rem 0; color: var(--text-secondary); font-size: 0.9rem;">Số TK: <strong style="color: white;">${accountNo}</strong></p>
+                <p style="margin: 0.25rem 0; color: var(--text-secondary); font-size: 0.9rem;">Số tiền: <strong style="color: var(--success);">${formatMoney(amount)}</strong></p>
+            </div>
+        `;
+        confirmBtn.style.display = 'block';
+        confirmBtn.onclick = () => {
+            closeQrModal();
+            if(onConfirm) onConfirm();
+        };
+    }
+    modal.classList.remove('hidden');
+};
+
+window.closeQrModal = function() {
+    document.getElementById('qrModal').classList.add('hidden');
+};
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', checkAuthAndLoadData);

@@ -33,11 +33,11 @@ public class AuthController {
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList()));
                     
-            if (!"admin".equals(authentication.getName())) {
-                com.f2r.payroll.entity.Employee emp = employeeRepository.findById(authentication.getName()).orElse(null);
-                if (emp != null) {
-                    userDetails.put("isFirstLogin", emp.getIsFirstLogin());
-                }
+            com.f2r.payroll.entity.Employee emp = employeeRepository.findById(authentication.getName()).orElse(null);
+            if (emp != null) {
+                userDetails.put("isFirstLogin", emp.getIsFirstLogin());
+                userDetails.put("bankName", emp.getBankName());
+                userDetails.put("bankAccountNumber", emp.getBankAccountNumber());
             }
         } else {
             userDetails.put("error", "Not authenticated");

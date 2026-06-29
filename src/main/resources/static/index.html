@@ -63,11 +63,37 @@
                 <button class="nav-item" data-target="create-page" id="menu-create">
                     <span class="icon">➕</span> Tạo Ca Mới
                 </button>
+                <button class="nav-item" data-target="profile-page" id="menu-profile">
+                    <span class="icon">👤</span> Hồ Sơ Của Tôi
+                </button>
             </nav>
         </aside>
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
+            
+            <!-- TRANG 0: HỒ SƠ CỦA TÔI -->
+            <div id="profile-page" class="page-section">
+                <section class="glass-card full-width">
+                    <div class="card-header">
+                        <h2>Hồ Sơ Của Tôi</h2>
+                        <p>Cập nhật thông tin cá nhân và tài khoản ngân hàng để nhận lương</p>
+                    </div>
+                    <form id="profileForm" class="form-group">
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Tên Ngân Hàng (Tên viết tắt. VD: MB, VCB, TPB...)</label>
+                                <input type="text" id="myBankName" placeholder="VD: MB" required>
+                            </div>
+                            <div class="input-col">
+                                <label>Số Tài Khoản</label>
+                                <input type="text" id="myBankAcc" placeholder="Nhập số tài khoản của bạn" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Lưu Thông Tin Ngân Hàng</button>
+                    </form>
+                </section>
+            </div>
             
             <!-- TRANG 1: TỔNG QUAN -->
             <div id="overview-page" class="page-section active">
@@ -197,7 +223,17 @@
                                 <input type="text" id="newEmpPhone" placeholder="Tùy chọn">
                             </div>
                         </div>
-                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Tạo Nhân Viên</button>
+                        <div class="input-row">
+                            <div class="input-col">
+                                <label>Tên Ngân Hàng</label>
+                                <input type="text" id="newEmpBankName" placeholder="VD: MB, VCB, TPB... (Tùy chọn)">
+                            </div>
+                            <div class="input-col">
+                                <label>Số Tài Khoản</label>
+                                <input type="text" id="newEmpBankAcc" placeholder="Nhập số tài khoản (Tùy chọn)">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Lưu Thông Tin Nhân Viên</button>
                     </form>
                     <div id="createEmpResult" class="result-box hidden"></div>
                 </section>
@@ -375,6 +411,23 @@
     </style>
 
     <datalist id="employeeSuggestions"></datalist>
+
+    <!-- MODAL QR CODE -->
+    <div id="qrModal" class="modal hidden" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.25rem;">Quét QR Thanh Toán</h3>
+                <button class="btn-text" onclick="closeQrModal()" style="font-size: 1.5rem; padding: 0;">&times;</button>
+            </div>
+            <div id="qrContent" style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                <!-- QR Image and details will be injected here -->
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn-secondary" onclick="closeQrModal()">Đóng</button>
+                <button class="btn-primary" id="confirmQrPayBtn" style="background: var(--success); display: none;">Đã Chuyển Khoản</button>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js?v=2"></script>
 </body>

@@ -7,4 +7,5 @@ import java.util.List;
 public interface EmployeeService {
     Employee createEmployee(EmployeeRequest request);
     List<Employee> getAllEmployees();
+    void updateBankInfo(String employeeId, String bankName, String bankAccountNumber);
 }

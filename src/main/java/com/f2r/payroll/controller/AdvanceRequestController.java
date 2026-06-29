@@ -146,6 +146,8 @@ public class AdvanceRequestController {
             EmployeeDTO empDto = new EmployeeDTO();
             empDto.setId(req.getEmployee().getId());
             empDto.setFullName(req.getEmployee().getFullName());
+            empDto.setBankName(req.getEmployee().getBankName());
+            empDto.setBankAccountNumber(req.getEmployee().getBankAccountNumber());
             dto.setEmployee(empDto);
         }
         return dto;
@@ -168,5 +170,7 @@ public class AdvanceRequestController {
     public static class EmployeeDTO {
         private String id;
         private String fullName;
+        private String bankName;
+        private String bankAccountNumber;
     }
 }

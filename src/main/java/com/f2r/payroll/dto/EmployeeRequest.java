@@ -8,4 +8,6 @@ public class EmployeeRequest {
     private String fullName;
     private String phoneNumber;
     private Boolean isActive;
+    private String bankName;
+    private String bankAccountNumber;
 }

@@ -26,4 +26,13 @@ public class EmployeeController {
     public ResponseEntity<List<Employee>> getAllEmployees() {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
+
+    @PutMapping("/me/bank")
+    public ResponseEntity<?> updateMyBankInfo(org.springframework.security.core.Authentication auth, @RequestBody java.util.Map<String, String> payload) {
+        String empId = auth.getName();
+        String bankName = payload.get("bankName");
+        String bankAccountNumber = payload.get("bankAccountNumber");
+        employeeService.updateBankInfo(empId, bankName, bankAccountNumber);
+        return ResponseEntity.ok().build();
+    }
 }

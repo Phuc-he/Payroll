@@ -23,4 +23,7 @@ public class Employee {
     
     @Column(name = "is_first_login", columnDefinition = "boolean default true")
     private Boolean isFirstLogin;
+
+    private String bankName;
+    private String bankAccountNumber;
 }

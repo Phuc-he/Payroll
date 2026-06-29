@@ -17,6 +17,8 @@ public class MonthlyPayrollResponse {
     private BigDecimal totalWage;
     private BigDecimal totalAdvance;
     private BigDecimal actualReceived;
+    private String bankName;
+    private String bankAccountNumber;
     private List<DailyWorkDetail> workDetails;
     private List<AdvancePaymentDetail> advanceDetails;
 }
