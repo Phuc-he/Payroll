@@ -605,6 +605,26 @@ document.getElementById('employeeList').addEventListener('input', (e) => {
     if (e.target.classList.contains('emp-wage-input')) {
         calculateLiveWage();
     }
+    
+    if (e.target.classList.contains('emp-id-input')) {
+        const allInputs = document.querySelectorAll('.emp-id-input');
+        const seen = new Set();
+        
+        allInputs.forEach(input => {
+            input.style.borderColor = '';
+            input.style.backgroundColor = '';
+            
+            const val = input.value.trim();
+            if (val) {
+                if (seen.has(val)) {
+                    input.style.borderColor = 'var(--danger)';
+                    input.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                } else {
+                    seen.add(val);
+                }
+            }
+        });
+    }
 });
 // Tính toán lần đầu
 calculateLiveWage();
@@ -778,13 +798,26 @@ document.getElementById('createScheduleForm').addEventListener('submit', async (
     
     // Thu thập danh sách nhân viên
     const employees = [];
+    const empIds = new Set();
+    let hasDuplicate = false;
+    
     document.querySelectorAll('.employee-row').forEach(row => {
-        const id = row.querySelector('.emp-id-input').value;
+        const id = row.querySelector('.emp-id-input').value.trim();
         const wage = row.querySelector('.emp-wage-input').value;
         if (id && wage) {
+            if (empIds.has(id)) {
+                hasDuplicate = true;
+            }
+            empIds.add(id);
             employees.push({ employeeId: id, wage: parseFloat(wage) });
         }
     });
+
+    if (hasDuplicate) {
+        resultBox.innerHTML = `<p style="color: var(--danger)">Lỗi: Bạn không thể chọn một nhân viên nhiều lần trong cùng một ca!</p>`;
+        resultBox.classList.remove('hidden');
+        return;
+    }
 
     const payload = {
         workDate: document.getElementById('workDate').value,
@@ -1024,7 +1057,8 @@ function applyRoleBasedUI(user) {
         if (bName && bAcc) {
             document.getElementById('myBankName').value = bName;
             document.getElementById('myBankAcc').value = bAcc;
-            document.getElementById('myQrImg').src = `https://img.vietqr.io/image/${bName}-${bAcc}-compact2.png`;
+            const safeBankId = getStandardBankId(bName);
+            document.getElementById('myQrImg').src = `https://img.vietqr.io/image/${safeBankId}-${bAcc.trim()}-compact2.png`;
             document.getElementById('myQrPreview').style.display = 'block';
         }
     }
@@ -1083,6 +1117,17 @@ function applyRoleBasedUI(user) {
 // ==========================================
 // QR CODE LOGIC
 // ==========================================
+function getStandardBankId(rawBankId) {
+    if (!rawBankId) return '';
+    let name = rawBankId.trim().toUpperCase().replace(/\s+/g, '').replace(/BANK/g, '');
+    const mapper = {
+        'VP': 'VPB', 'TECH': 'TCB', 'TECHCOM': 'TCB', 'VIETIN': 'ICB',
+        'VIETCOM': 'VCB', 'AGRI': 'VBA', 'LIENVIET': 'LPB', 'TIENPHONG': 'TPB',
+        'TP': 'TPB', 'MARITIME': 'MSB', 'MS': 'MSB', 'SACOM': 'STB', 'HD': 'HDB'
+    };
+    return mapper[name] || name;
+}
+
 window.showQrModal = function(bankId, accountNo, amount, content, onConfirm) {
     const modal = document.getElementById('qrModal');
     const contentDiv = document.getElementById('qrContent');
@@ -1097,7 +1142,8 @@ window.showQrModal = function(bankId, accountNo, amount, content, onConfirm) {
         `;
         confirmBtn.style.display = 'none';
     } else {
-        const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
+        const safeBankId = getStandardBankId(bankId);
+        const qrUrl = `https://img.vietqr.io/image/${safeBankId}-${accountNo.trim()}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
         contentDiv.innerHTML = `
             <img src="${qrUrl}" style="width: 100%; max-width: 300px; border-radius: 1rem; border: 2px solid rgba(255,255,255,0.1);">
             <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; width: 100%; text-align: left;">

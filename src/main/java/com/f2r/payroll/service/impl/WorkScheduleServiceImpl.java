@@ -44,7 +44,11 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .build();
 
         if (request.getEmployees() != null) {
+            java.util.Set<String> empIds = new java.util.HashSet<>();
             for (EmployeeTimesheetRequest empReq : request.getEmployees()) {
+                if (!empIds.add(empReq.getEmployeeId())) {
+                    throw new IllegalArgumentException("Duplicate employee in work schedule: " + empReq.getEmployeeId());
+                }
                 Employee employee = employeeRepository.findById(empReq.getEmployeeId())
                         .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
@@ -96,7 +100,11 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         workSchedule.getTimesheets().clear();
 
         if (request.getEmployees() != null) {
+            java.util.Set<String> empIds = new java.util.HashSet<>();
             for (EmployeeTimesheetRequest empReq : request.getEmployees()) {
+                if (!empIds.add(empReq.getEmployeeId())) {
+                    throw new IllegalArgumentException("Duplicate employee in work schedule: " + empReq.getEmployeeId());
+                }
                 Employee employee = employeeRepository.findById(empReq.getEmployeeId())
                         .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
