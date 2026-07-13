@@ -661,7 +661,18 @@ document.getElementById('quantity').addEventListener('input', generateEmployeeRo
 document.getElementById('casualWorkerCount').addEventListener('input', generateEmployeeRows);
 
 // Chạy lần đầu khi load trang
+function setDefaultWorkDate() {
+    if (!editingScheduleId) {
+        // Lấy ngày hôm nay theo múi giờ local
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('workDate').value = `${yyyy}-${mm}-${dd}`;
+    }
+}
 generateEmployeeRows();
+setDefaultWorkDate();
 
 // ==========================================
 // 5. HIỂN THỊ CHI TIẾT CA LÀM VIỆC (MODAL)
@@ -872,6 +883,7 @@ document.getElementById('createScheduleForm').addEventListener('submit', async (
             // Xóa form sau khi tạo thành công
             document.getElementById('createScheduleForm').reset();
             generateEmployeeRows();
+            setDefaultWorkDate();
         }
         
         // Cập nhật lại toàn bộ dữ liệu để load ca mới hoặc ca vừa sửa
@@ -963,10 +975,20 @@ async function loadAdvanceRequests() {
     }
 }
 
+let isSubmittingAdvance = false;
 document.getElementById('advanceRequestForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (isSubmittingAdvance) return;
+    
     const amount = document.getElementById('requestAmount').value;
     const reason = document.getElementById('requestReason').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    isSubmittingAdvance = true;
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Đang xử lý...';
+    }
     
     try {
         const res = await fetch(`${API_BASE}/advance-requests`, {
@@ -980,6 +1002,12 @@ document.getElementById('advanceRequestForm').addEventListener('submit', async (
         loadAdvanceRequests();
     } catch (err) {
         alert('Lỗi: ' + err.message);
+    } finally {
+        isSubmittingAdvance = false;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Gửi Yêu Cầu';
+        }
     }
 });
 
