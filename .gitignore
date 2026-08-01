@@ -1,12 +1,493 @@
-# Chặn toàn bộ thư mục target chứa code đã biên dịch
-target/
+====MSUI======================================
+oanhntk@gm-group.vn | @_~~PNq0:
+10.207.247.220:3389
 
-# Chặn các file cấu hình của IDE (IntelliJ, Eclipse,...)
-.idea/
-*.iml
-.classpath
-.project
-.settings/
+ducnt@1234567
+==
+npx ng serve --host 0.0.0.0 --port 4300
+==
 
-# Chặn các file log hệ thống sinh ra khi chạy
-*.log
+{
+    "account": "MinhBC123@gmail.com",
+    "password": "123456Aa@",
+    "code": "HA002",
+    "name": "aaaaa",
+    "userType": "BUYER"
+}
+==============================================
+
+Thông tin acc test 
+Acc buyer: NHGHA/giangha@gmail.com/Giangha123@ Chi nhánh chat 
+Acc NCC: 0975141964
++ NCC Giang hà 1: 0975708322/123456aA@/HA 
++ NCC Định coong: 0343450000/123456Aa@/NCCDINHCONG
+===========
+
+
+UAT:
+GIANGHA12/0967015521/1234567aA@  (BUYER)
+
+GHA111/0967015521/123456aA@      (SELLER)
+
+yenct@gm-group.vn/Waq10222
+
+
+====VDI=======================================
+
+ducnt@123456
+os_gms_ductn
+
+
+===VDI======================
+minhbc@gm-group.vn | $uc(BL%oKVf9
+
+loinx@gm-group.vn  | geVPT)4hd*kq
+
+LANNT/nhlannt@gmail.com/123456Aa@ Nh của chị Lan
+
+giangha@gmail.com
+
+ngannguyen.260698@gmail.com NSNGAN
+NCC013
+
+6Pqr3Ozz!CZ9
+
+netstat -ano | findstr :8888
+taskkill /PID 12345 /F
+R
+  redis:
+    hosts: 192.168.170.14:6379
+    port: 6379
+    database: 0
+    password: redis
+
+  storage:
+    minio:
+      config:
+        url: http://192.168.170.14:9000
+        access-key: admin
+        secret-key: admin123
+        bucket: san-nong-san
+        cdn-url: http://192.168.170.14:9000
+        internal-url: http://192.168.170.14:9000
+        serviceDir: b2b-cif
+
+paymentAdjustmentPending true là ẩn
+
+mongodb://chat_user:chat_password@192.168.168.159:27017/b2b_conversation?authSource=b2b_conversation
+admin
+admin
+
+
+===Rule Commit===============================
+comment:
+UAT-EXCEL_<SHEET>-ID-<comment>
+UAT-OP-ID-<comment>
+UAT-JIRA-ID-<comment>
+------------------
+Chữa cháy:
+1. Lấy lại commit từ production.
+2. Revert lại nhánh uat-vds về commit đó
+3. cherypick các commit tiếp theo vào nhánh uat-vds
+------------------
+test:
+Vẫn test trên stag vds
+Sau mỗi lần merge lên uat thì test vào verify lại trên uat trước khi bàn giao cho PO nghiệm thu
+-----------------
+Merge code đưa lên staging/uat:
+Dựa vào commit để phán định
+Gọi dev ra để merge cùng
+
+==================
+Quy trình thao tác của các task:
+
+- Tạo PR theo rule comment
+- Cung cấp curl cho reviewer
+- Người review check TKCT, call thử curl, check logic, business
+- Sau khi merge code, developer lên env dev thử call lại xem có vấn đề gì không trước khi gửi API cho FE ghép
+- Sau khi check OK, gửi lên nhóm Viettel Dev tag Leader FE và BE kèm dev FE để cả 2 bên nắm thông tin
+- Nếu có update gì về API, cần update lại TKCT và nhắn thông báo lên nhóm Viettel Dev và tag leader vào để clear thông tin
+
+===Keycloak===============================
+Keycloak a-duc: http://192.168.170.88:8080/  | aLSxkfoC4c0rtAqb9Z3m15Drhlu0YbgE
+
+===Keycloak===============================
+Keycloak a-phuong: http://192.168.170.14:8088/  | PDCr5OVrKyEOAz4visVj5Qm2qCQcFDG2
+
+
+
+===DB aPhuong=============================
+jdbc:mariadb://192.168.170.14:3306   | root | admin |
+
+
+
+===DB dev================================
+
+jdbc:mariadb://192.168.168.148:3306
+
+===minio================================
+  storage:
+    minio:
+      config:
+        url: http://192.168.170.88:9000
+        access-key: minio
+        secret-key: minio123
+        bucket: san-nong-san
+        cdn-url: http://192.168.170.88:9001
+        serviceDir: b2b-cif/account
+        internal-url: http://192.168.170.88:9000
+
+=======================================
+
+-json atribute khi dùng boolean
+-tối ưu để sau dễ maintain
+-check trường hợp bị ảnh hưởng khi sửa code phần khác
+
+
+
+
+
+
+
+
+-Ở mh tạo mới để mặc định enable button "Tạo mới", bỏ filed "Ngày bắt đầu", sắp xếp lại thứ tự các filed: họ và tên, email, phone để gần nhau => tạo CR và bên VDS báo update tài liệu xong mới sửa 
+=> ====bỏ field bỏ filed "Ngày bắt đầu"=====
+
+-TH quá hạn chưa kích hoạt tài khoản => chuyển trạng thái từ "Chưa kích hoạt" sang "Hết hiệu lực" => Tạo CR ưu tiên cao, bên VDS update tài liệu xong mới sửa
+=> ====Hết hạn kích hoạt => batch ko xóa nữa; Khi lấy ra nếu new - create > range => Status là hết hiệu lực
+=> Sửa lại query; đều lấy ra các staff => từ status và create tính trạng thái
+=> Khi login với tài khoản chưa kích hoạt khác với hết hiệu lực như nào
+
+-Nội dung check trùng email và số điện thoại với các acc ở trạng thái = "Đang hoạt động", "Chưa kích hoạt", Trạng thái = "Hết hiệu lực" không check trùng => anh Hoang Van Son xem lại bên dev đã xử lý ntn chưa nếu chưa add lên jira dev xử lý 
+=> Ko check trùng => có thể trùng giữa các trạng thái 
+
+
+-Xóa nhân viên thành công, xử lý update acc đó thành trạng thái = "Hết hiệu lực" => CR ưu tiên, bên VDS update tài liệu xong mới sửa
+=> Có thể lấy deleted là hết hiệu lực
+
+
+-Ở mh chỉnh sửa, nếu nhập trùng cả email và sdt => BE check báo lỗi inline ở cả 2 filed này => anh To Nhu Duc đánh giá giúp em xem làm được k ạ => T2 trả lời em để em báo lại VDS
+
+
+
+
+
+*API vận chuyển
+-Chia api để code
+  -Xem tài liệu + database
+   -Thiết kế api
+    -Code
+
+
+  tracking varchar  ??? (theo dõi)
+  ship_address_province varchar [note: '[UTF8] Địa chỉ ship hàng - tỉnh']
+  ship_address_ward varchar [note: '[UTF8] Địa chỉ ship hàng - khu']
+  ship_address_line varchar [note: '[UTF8] Địa chỉ ship hàng - tên đường, toà nhà']
+
+  status varchar(10) [note: 'ENUM: PROCESSING, FAIL, CANCEL, FINISH']
+  cost bigint           [Chi phí]
+  est_delivery_time_from  datetime  [note: 'Thời điểm dự kiến giao - From']
+  est_delivery_time_to  datetime  [note: 'Thời điểm dự kiến giao - To']
+  delivery_time  datetime  [note: 'Thời điểm giao hàng']
+
+
+  failed_reason varchar(200) [note: '[UTF8] Lý do giao hàng thất bại']
+
+  location_id CHAR(32)   ???
+  logistic_id CHAR(32)    [ref: > b2b_logistics.id]
+  ~partial_pic_with_index
+  indexes { 
+    (id, created_at) [pk] 
+    order_id
+    logistic_id
+  }
+  note: '''[PARTITION_BY_created_at_YEAR] Thông tin vận chuyển'''
+}
+
+====Công ty vận chuyển=====
+Table b2b_logistics { 
+  ~id
+  name varchar [note: '[UTF8]']
+  type datetime               =loai van chuyen    
+  enabled bool                =Bật tắt
+
+  search_url varchar          =Link cty
+  api_url  varchar            =api api lấy thông tin cty
+  api_key  varchar            =key cua cty
+  ~partial_pic_with_index
+  indexes { 
+    name
+  }
+  note: "Công ty vận chuyển"
+}
+
+
+
+
+
+===shipping_policies
+Các chính sách vận chuyển: của seller đặt ra, tên, phí, loại giảm giá [REDUCE, FREE]
+min_order_free: giá trị nhỏ nhất cần đạt được để áp dụng ship FREE
+
+
+==shipping_policy_reduces
+Các vùng giảm giá: Dựa vào giá trị đơn hàng => Giảm giá bao nhiêu
+min_order_value: Giá trị đơn hàng cần đạt tối thiểu
+ship_fee: mức phí vận chuyển khi đơn hàng >= min_order_value
+
+==shipping_policy_areas
+Các địa chỉ được áp dụng chính sách vận chuyển
+Tỉnh, Xã (có response ra id ko)
+
+==>Khi search thì Fe: tìm kiếm theo danh sách api trả về (tỉnh + huyện)
+==>Khi submit tìm kiếm thì truyền id tỉnh, huyện xuống (1 thành phố, nhiều huyện)
+
+===Xóa policy thì ảnh hưởng xóa địa chỉ ở admin; => ko được xóa khi đang áp dụng vận chuyển ở farm
+
+
+
+
+
+
+===========  https://git.gm-group.vn/viettel-f2r/cif-service/-/merge_requests/351    ================
+
+
+==database===
+
+CREATE TABLE `b2b_shipping_policies` (
+  `id` char(32) PRIMARY KEY,
+  `seller_id` char(32) COMMENT 'Id của seller',
+  `name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT 'Tên của chính sách vận chuyển do NCC đặt',
+  `base_fee` bigint NOT NULL COMMENT 'Phí vận chuyển cơ bản (bắt buộc > 0). Áp dụng mặc định cho các khu vực thuộc chính sách',
+  `discount_type` varchar(10) NOT NULL COMMENT 'Loại ưu đãi phí vận chuyể. ENUM: NONE = không ưu đãi, FREE = miễn phí khi đạt ngưỡng, REDUCE = giảm phí theo bậc giá trị đơn hàng',
+  `min_order_free` bigint COMMENT 'Ngưỡng giá trị đơn hàng để được miễn phí vận chuyển (chỉ dùng khi discount_type = FREE)',
+  `created_at` datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+  `updated_at` datetime DEFAULT null ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` CHAR(32),
+  `updated_by` CHAR(32)
+);
+
+
+CREATE INDEX `created_at_idx` ON `b2b_shipping_policies` (`created_at`);
+
+CREATE INDEX `updated_at_idx` ON `b2b_shipping_policies` (`updated_at`);
+
+CREATE INDEX `b2b_shipping_policies_index_87` ON `b2b_shipping_policies` (`seller_id`);
+
+CREATE INDEX `b2b_shipping_policies_index_88` ON `b2b_shipping_policies` (`discount_type`);
+
+ALTER TABLE `b2b_shipping_policies` COMMENT = 'Bảng lưu thông tin cấu hình chính của chính sách vận chuyển, bao gồm phí cơ bản và loại hình ưu đãi áp dụng';
+
+CREATE TABLE `b2b_shipping_policy_areas` (
+  `id` char(32) PRIMARY KEY,
+  `shipping_policy_id` char(32) NOT NULL COMMENT 'ID của chính sách vận chuyển liên kết',
+  `province_id` char(32) NOT NULL COMMENT 'ID của Tỉnh/Thành phố áp dụng chính sách',
+  `ward_id` char(32) NOT NULL COMMENT 'ID của Phường/Xã áp dụng chính sách',
+  `created_at` datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+  `updated_at` datetime DEFAULT null ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` CHAR(32),
+  `updated_by` CHAR(32)
+);
+
+CREATE INDEX `created_at_idx` ON `b2b_shipping_policy_areas` (`created_at`);
+
+CREATE INDEX `updated_at_idx` ON `b2b_shipping_policy_areas` (`updated_at`);
+
+CREATE UNIQUE INDEX `uq_policy_ward` ON `b2b_shipping_policy_areas` (`id`, `ward_id`);
+
+ALTER TABLE `b2b_shipping_policy_areas` COMMENT = 'Bảng ánh xạ giữa chính sách vận chuyển và các khu vực hành chính (phường/xã) mà chính sách được áp dụng. Một phường chỉ thuộc một chính sách của NCC.';
+
+
+
+CREATE TABLE `b2b_shipping_policy_reduces` (
+  `id` char(32) PRIMARY KEY,
+  `shipping_policy_id` char(32) NOT NULL COMMENT 'ID của chính sách vận chuyển liên kết',
+  `min_order_value` char(32) NOT NULL COMMENT 'Giá trị đơn hàng tối thiểu để áp dụng mức phí này',
+  `shipping_fee` bigint NOT NULL COMMENT 'Mức phí vận chuyển tương ứng với giá trị đơn hàng ≥ min_order_value',
+  `created_at` datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+  `updated_at` datetime DEFAULT null ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` CHAR(32),
+  `updated_by` CHAR(32)
+);
+
+CREATE INDEX `created_at_idx` ON `b2b_shipping_policy_reduces` (`created_at`);
+
+CREATE INDEX `updated_at_idx` ON `b2b_shipping_policy_reduces` (`updated_at`);
+
+CREATE INDEX `shipping_policy_reduces_index_94` ON `b2b_shipping_policy_reduces` (`shipping_policy_id`);
+
+CREATE UNIQUE INDEX `uq_policy_min_order` ON `b2b_shipping_policy_reduces` (`id`, `min_order_value`);
+
+ALTER TABLE `b2b_shipping_policy_reduces` COMMENT = 'Bảng lưu danh sách các mức giảm phí vận chuyển theo giá trị đơn hàng, chỉ áp dụng khi chính sách có discount_type = REDUCE.';
+
+# ===================cif==================================
+ALTER TABLE b2b_m_provinces
+ADD commnune_type NVARCHAR(255) NULL comment 'ENUM: Tỉnh, Thành Phố';
+
+
+QUAN TRỌNG
+
+
+#=====CHỉnh sử phạm vi nhà cung cấp========
+Ảnh hưởng từ phase 2
+
+#=====Trả về 2 mã lỗi=========
+
+==Thay đổi ở nhánh cho giống trên dev====
+
+
+====https://api-freso.gm-group.vn===
+
+===Xóa batch => Thấy đang double DELETE_STAFF_BUYER_BATCH
+
+
+=====
+Bug pro
+https://jira.viettelmoney.vn/browse/DSNS-904?jql=project%20%3D%20DSNS%20AND%20issuetype%20in%20(Bug%2C%20%22Bug%20UAT%22%2C%20%22Bug%20nghi%E1%BB%87m%20thu%22)%20AND%20status%20%3D%20%22To%20Do%22
+
+====
+Mã số thuế: thêm 12 số
+
+
+bug: DSNS-1036
+bug: 
+
+10 ký tự số viết liền 
+10 ký tự sô - 3 ký tự số: tổng 14 ký tự
+
+
+====
+Bug search name
+https://jira.viettelmoney.vn/browse/DSNS-1049 => sap xep
+https://jira.viettelmoney.vn/browse/DSNS-1077 => search khi afd ky tu daac biet
+https://jira.viettelmoney.vn/browse/DSNS-1077
+
+
+
+====Trang chi tiết sp hot => review
+====Confirm cr taxCode => sửa
+
+https://git.gm-group.vn/viettel-f2r/cif-service/-/merge_requests/377
+
+
+======================25/10===========
+Get recommend order: 
+http://10.254.136.35:8090/pages/viewpage.action?pageId=148517237
+
+
+
+====
+ALTER TABLE b2b_order_line_items
+ADD COLUMN tax_rate DOUBLE;
+
+===
+
+Sản phẩm yêu thích ko có seller; còn khi sắp xếp ang nddeensorrder thì khi do có seller r
+
+
+
+
+
+
+private String itemTotal;
+        private String total;
+
+
+
+========
+Danh sách đơn hàng khiếu nại: 
+Tab danh sách đơn hàng: 
+Tab cần xử lý: khiếu nại + ít nhất 1 sản phẩm trạn thái "Chờ sàn khiếu nại"
+Sắp xếp: sớm hơn thì đẩy lên
+
+
+Tab: Sản phẩm khiếu nại:
+các sản phẩm đang khiếu nại trong đơn. (Chờ sàn xử lý: lên đầu, ko có thì lần lượt theo vùng)
+
+
+=>  Chờ sàn xử lý thì hiển thị thêm các button
+  **Từ chối khiếu nại             +> Popup điền thông tin
+  **Xử lý không Hoàn tiền     => Đã xử lý - không hoàn tiền
+  **Xử lý hoàn tiền  (mặc định) => cập nhật trạng thái về "Chờ hoàn tiền"
+
+
+
+
+===Meeting=====
+
+
+
+
+==
+Bổ sung refundInfo:
+"refundInfo": {
+        "orderId": "31303130000000000000000000000000",
+        "status": "SUCCESS",
+        "refundAt": "2025-09-12T14:04:41",
+        "amount": 12000,
+        "refundReason": "test"
+    }
+
+======Merge=====
+https://git.gm-group.vn/viettel-f2r/order-service/-/merge_requests/248
+
+
+
+Cần tính trên số lượng thực giao của CTKM đó; ko lấy từ discount_amount mà SUM(prv_discount.unit_price_amount_after * quantiy)
+Còn orderAmountAfter tính dựa trên tổng của variant_id được áp dụng CTKM OWNER_TYPE là SELLER của order_id 
+tính theo công thức SUM(b2b_order_line_valu_snapshot.origin_ncc_total_with_tax - b2b_order_line_valu_snapshot.complaint_refund_amount)
+
+
+
+
+
+
+
+SELLER
+
+discountAmount — Giá trị hàng sau KM của CTKM đang xem
+Tính trên số lượng thực giao (promotion_redemption_variant.quantity) của đúng CTKM (promotionId trên URL), không dùng cột discount_amount.
+
+discountAmount = SUM(
+  prv.unit_price_amount_after × prv.quantity
+)
+
+
+Giá trị đơn trước KM
+promotion_redemption.order_amount_before (lúc ghi redemption)
+
+Giá trị đơn sau KM (cột I)
+= SUM(
+    original_ncc_total_with_tax
+  − complaint_refund_amount
+  )
+
+
+
+
++ Báo giá có 3 loại
+  - ALL        : báo giá sàn dành cho đối tượng doanh nghiệp và hộ kinh doanh
+  - BUYERS     : báo giá đôí tượng (doanh nghiệp và hộ kinh doanh) - chỉ nhưng buyer nào được chỉ định 
+  - INDIVIDUAL : báo giá cả nhân (buyer cá nhân)
++ Buyer có 3 loai:
+    - ENTERPRISE : doanh nghiệp
+  - HOUSEHOLD  : hộ kinh doanh
+  - INDIVIDUAL : cá nhân
+-> trong token nếu là buyer sẽ có thếm 1 trường để phân biệt
++ Logic lấy báo giá, ảnh hưởng khuyến mại lên báo giá
+  Bản thân seller có thể khai báo sản phẩm A vừa có báo giá ALL và có báo giá BUYERS
+  - doanh nghiệp và hộ kinh doanh : Có thể có đồng thời ALL và BUYERS -> mặc định ưu tiên BUYERS
+  - Khuyến mại chỉ áp dụng vào báo giá sàn (ALL)
+
+
+
+
+
+
+
+
+
+
+
+
+ 

@@ -479,10 +479,26 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
                     onclick="showQrModal(${bName}, ${bAcc}, ${data.actualReceived}, 'Thanh toan luong ${empId}', () => { 
                         document.getElementById('payAmount').value = ${data.actualReceived};
                         document.getElementById('payNotes').value = 'Thanh toán lương tháng ${month}/${year}';
+                        
+                        // Xử lý chốt sổ: Lùi ngày thanh toán về ngày cuối cùng của tháng đang xem báo cáo
+                        const y = parseInt('${year}');
+                        const m = parseInt('${month}');
+                        const lastDay = new Date(y, m, 0).getDate();
+                        const backdate = y + '-' + String(m).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+                        document.getElementById('payDate').value = backdate;
+                        
                         document.getElementById('payForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                        
                         setTimeout(() => {
                             document.getElementById('payrollForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
                             window.scrollTo({ top: 0, behavior: 'smooth' });
+                            
+                            // Reset lại ngày hôm nay cho các lần ứng tiền bình thường
+                            const today = new Date();
+                            const ty = today.getFullYear();
+                            const tm = String(today.getMonth() + 1).padStart(2, '0');
+                            const td = String(today.getDate()).padStart(2, '0');
+                            document.getElementById('payDate').value = \`\${ty}-\${tm}-\${td}\`;
                         }, 500);
                     })">
                     <span class="icon">📱</span> Hiển Thị Mã QR Thanh Toán
@@ -505,6 +521,13 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
 
         // Tự động điền ID nhân viên vào form thanh toán bên dưới
         document.getElementById('payEmpId').value = empId;
+        
+        // Tự động lùi ngày thanh toán thủ công về cuối tháng đang xem báo cáo
+        const y = parseInt(year);
+        const m = parseInt(month);
+        const lastDay = new Date(y, m, 0).getDate();
+        document.getElementById('payDate').value = y + '-' + String(m).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+        
     } catch (error) {
         resultBox.innerHTML = `<p style="color: var(--danger)">${error.message}</p>`;
         resultBox.classList.remove('hidden');
