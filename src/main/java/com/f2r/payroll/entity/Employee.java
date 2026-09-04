@@ -24,6 +24,9 @@ public class Employee {
     @Column(name = "is_first_login", columnDefinition = "boolean default true")
     private Boolean isFirstLogin;
 
+    @Column(name = "is_deleted", columnDefinition = "boolean default false")
+    private Boolean isDeleted = false;
+
     private String bankName;
     private String bankAccountNumber;
 }

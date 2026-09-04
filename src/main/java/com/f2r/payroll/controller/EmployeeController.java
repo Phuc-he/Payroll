@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/payroll/employees")
 @RequiredArgsConstructor
@@ -28,11 +31,15 @@ public class EmployeeController {
     }
 
     @PutMapping("/me/bank")
-    public ResponseEntity<?> updateMyBankInfo(org.springframework.security.core.Authentication auth, @RequestBody java.util.Map<String, String> payload) {
-        String empId = auth.getName();
-        String bankName = payload.get("bankName");
-        String bankAccountNumber = payload.get("bankAccountNumber");
-        employeeService.updateBankInfo(empId, bankName, bankAccountNumber);
+    public ResponseEntity<?> updateMyBankInfo(Authentication authentication, @RequestBody Map<String, String> payload) {
+        String employeeId = authentication.getName();
+        employeeService.updateBankInfo(employeeId, payload.get("bankName"), payload.get("bankAccountNumber"));
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEmployee(@PathVariable String id) {
+        employeeService.deleteEmployee(id);
         return ResponseEntity.ok().build();
     }
 }

@@ -41,7 +41,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional(readOnly = true)
     public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+        return employeeRepository.findByIsDeletedFalseOrIsDeletedIsNull();
     }
 
     @Override
@@ -51,6 +51,15 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         employee.setBankName(bankName);
         employee.setBankAccountNumber(bankAccountNumber);
+        employeeRepository.save(employee);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEmployee(String employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+        employee.setIsDeleted(true);
         employeeRepository.save(employee);
     }
 }

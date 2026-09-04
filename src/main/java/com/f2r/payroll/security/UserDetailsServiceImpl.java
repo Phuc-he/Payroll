@@ -30,6 +30,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Employee employee = employeeRepository.findById(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
+        if (Boolean.TRUE.equals(employee.getIsDeleted())) {
+            throw new UsernameNotFoundException("User has been deleted or deactivated: " + username);
+        }
+
         String role = employee.getRole() != null ? employee.getRole() : "ROLE_USER";
         
         if (employee.getPassword() == null) {

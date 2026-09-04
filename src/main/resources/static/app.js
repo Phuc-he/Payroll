@@ -80,19 +80,44 @@ window.refreshAllData = function() {
 const navItems = document.querySelectorAll('.nav-item');
 const pages = document.querySelectorAll('.page-section');
 
+window.switchPage = function(targetId, addToHistory = true) {
+    // Hide all
+    navItems.forEach(nav => nav.classList.remove('active'));
+    pages.forEach(page => page.classList.remove('active'));
+    
+    // Show target
+    const activeNav = document.querySelector(`.nav-item[data-target='${targetId}']`);
+    if (activeNav) activeNav.classList.add('active');
+    
+    const targetPage = document.getElementById(targetId);
+    if (targetPage) targetPage.classList.add('active');
+    
+    // Add to browser history
+    if (addToHistory) {
+        history.pushState({ pageId: targetId }, "", `#${targetId}`);
+    }
+};
+
 navItems.forEach(item => {
     item.addEventListener('click', () => {
-        // Remove active class from all nav items
-        navItems.forEach(nav => nav.classList.remove('active'));
-        // Add active class to clicked nav
-        item.classList.add('active');
-
-        // Hide all pages
-        pages.forEach(page => page.classList.remove('active'));
-        // Show target page
         const targetId = item.getAttribute('data-target');
-        document.getElementById(targetId).classList.add('active');
+        switchPage(targetId);
     });
+});
+
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.pageId) {
+        switchPage(event.state.pageId, false);
+    } else {
+        const hash = window.location.hash.replace('#', '');
+        if (hash && document.getElementById(hash)) {
+            switchPage(hash, false);
+        } else {
+            // Default based on role
+            const defaultPage = (currentUser && !currentUser.roles.includes('ROLE_ADMIN')) ? 'payroll-page' : 'overview-page';
+            switchPage(defaultPage, false);
+        }
+    }
 });
 
 
@@ -181,10 +206,14 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                                         <option value="ĐÃ NHẬN" ${s.paymentStatus === 'ĐÃ NHẬN' ? 'selected' : ''} style="color: var(--success)">ĐÃ NHẬN</option>
                                     </select>
                                 </td>
-                                <td>
-                                    <button type="button" class="btn-text" style="color: var(--primary); font-weight: bold; padding: 4px 8px; border: 1px solid var(--primary); border-radius: 4px;" onclick="showScheduleDetails(${s.id})">Xem</button>
-                                    <button type="button" class="btn-text" style="color: #eab308; font-weight: bold; padding: 4px 8px; border: 1px solid #eab308; border-radius: 4px; margin-left: 4px;" onclick="editWorkSchedule(${s.id})">Sửa</button>
-                                    <button type="button" class="btn-text" style="color: var(--danger); font-weight: bold; padding: 4px 8px; border: 1px solid var(--danger); border-radius: 4px; margin-left: 4px;" onclick="deleteWorkSchedule(${s.id})">Xóa</button>
+                                <td style="display: flex; gap: 0.25rem;">
+                                    <button type="button" class="action-btn action-btn-primary" onclick="showScheduleDetails(${s.id})" title="Xem chi tiết">Xem</button>
+                                    <button type="button" class="action-btn action-btn-warning" onclick="editWorkSchedule(${s.id})" title="Sửa ca làm việc">Sửa</button>
+                                    <button type="button" class="action-btn action-btn-danger" onclick="deleteWorkSchedule(${s.id})" title="Xóa ca làm việc">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </td>
                             </tr>
                             `;
@@ -303,14 +332,21 @@ document.getElementById('employeesForm').addEventListener('submit', async (e) =>
                     <td class="format-money" style="color: ${emp.actualReceived < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight: bold;">
                         ${formatMoney(emp.actualReceived)}
                     </td>
-                    <td>
-                        <button type="button" class="btn-text" style="color: var(--primary); font-weight: bold; padding: 4px 8px; border: 1px solid var(--primary); border-radius: 4px;" onclick="
-                            document.querySelector('.nav-item[data-target=\\'payroll-page\\']').click();
+                    <td style="display: flex; gap: 0.5rem; justify-content: flex-start; align-items: center;">
+                        <button type="button" class="action-btn action-btn-primary" onclick="
+                            switchPage('payroll-page');
                             document.getElementById('empId').value = '${emp.id}';
                             document.getElementById('month').value = ${month};
                             document.getElementById('year').value = ${year};
                             document.getElementById('payrollForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                        ">Chi tiết</button>
+                        " title="Xem chi tiết lương">
+                            Chi tiết
+                        </button>
+                        <button type="button" class="action-btn action-btn-danger" onclick="deleteEmployee('${emp.id}', '${emp.fullName}')" title="Xóa nhân viên">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
                     </td>
                 </tr>
                 `;
@@ -395,6 +431,23 @@ document.getElementById('createEmpForm').addEventListener('submit', async (e) =>
 // ==========================================
 // 2. BÁO CÁO LƯƠNG NHÂN VIÊN
 // ==========================================
+function getOptimalPayDate(yearStr, monthStr) {
+    const y = parseInt(yearStr);
+    const m = parseInt(monthStr);
+    const today = new Date();
+    const currentY = today.getFullYear();
+    const currentM = today.getMonth() + 1;
+
+    if (y === currentY && m === currentM) {
+        const td = String(today.getDate()).padStart(2, '0');
+        const tm = String(currentM).padStart(2, '0');
+        return `${currentY}-${tm}-${td}`;
+    } else {
+        const lastDay = new Date(y, m, 0).getDate();
+        return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    }
+}
+
 document.getElementById('payrollForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const empId = document.getElementById('empId').value;
@@ -480,12 +533,8 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
                         document.getElementById('payAmount').value = ${data.actualReceived};
                         document.getElementById('payNotes').value = 'Thanh toán lương tháng ${month}/${year}';
                         
-                        // Xử lý chốt sổ: Lùi ngày thanh toán về ngày cuối cùng của tháng đang xem báo cáo
-                        const y = parseInt('${year}');
-                        const m = parseInt('${month}');
-                        const lastDay = new Date(y, m, 0).getDate();
-                        const backdate = y + '-' + String(m).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
-                        document.getElementById('payDate').value = backdate;
+                        // Xử lý chốt sổ: Lùi ngày thanh toán về ngày cuối cùng của tháng nếu đang xem tháng cũ, hoặc hôm nay nếu xem tháng hiện tại
+                        document.getElementById('payDate').value = getOptimalPayDate('${year}', '${month}');
                         
                         document.getElementById('payForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
                         
@@ -522,11 +571,8 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
         // Tự động điền ID nhân viên vào form thanh toán bên dưới
         document.getElementById('payEmpId').value = empId;
         
-        // Tự động lùi ngày thanh toán thủ công về cuối tháng đang xem báo cáo
-        const y = parseInt(year);
-        const m = parseInt(month);
-        const lastDay = new Date(y, m, 0).getDate();
-        document.getElementById('payDate').value = y + '-' + String(m).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+        // Tự động chỉnh ngày thanh toán thủ công về đúng kỳ lương
+        document.getElementById('payDate').value = getOptimalPayDate(year, month);
         
     } catch (error) {
         resultBox.innerHTML = `<p style="color: var(--danger)">${error.message}</p>`;
@@ -1097,7 +1143,10 @@ function applyRoleBasedUI(user) {
         }
         
         // Switch to Salary Report tab by default since others are hidden
-        if(document.getElementById('menu-payroll')) document.getElementById('menu-payroll').click();
+        if(document.getElementById('menu-payroll')) {
+            const hash = window.location.hash.replace('#', '');
+            if (!hash) switchPage('payroll-page', false);
+        }
         
         // Show advance request form for users
         if(document.getElementById('advanceRequestFormContainer')) document.getElementById('advanceRequestFormContainer').style.display = 'block';
@@ -1221,3 +1270,26 @@ if (document.readyState === 'loading') {
 } else {
     checkAuthAndLoadData();
 }
+// ==========================================
+// THIẾT KẾ XÓA MỀM (SOFT DELETE) NHÂN VIÊN
+// ==========================================
+window.deleteEmployee = async function(id, name) {
+    if(!confirm(`Xác nhận đánh dấu nhân viên "${name} (${id})" đã nghỉ việc?\nLưu ý: Dữ liệu ca làm việc cũ vẫn sẽ được bảo lưu.`)) return;
+    
+    try {
+        const res = await fetch(`${API_BASE}/employees/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Không thể xóa nhân viên này. Hãy chắc chắn bạn có quyền Admin.');
+        
+        // Tải lại NGẦM (load ẩn) danh sách gợi ý cho ô tìm kiếm
+        loadEmployees(); 
+        
+        // Tải lại NGẦM bảng danh sách nhân viên để dòng vừa xóa tự động biến mất
+        const empForm = document.getElementById('employeesForm');
+        if (empForm) {
+            empForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+        
+    } catch (err) {
+        alert('Lỗi: ' + err.message);
+    }
+};
