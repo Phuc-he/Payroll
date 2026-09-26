@@ -15,6 +15,7 @@ import java.util.List;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -30,7 +31,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // Default credentials for new employee
         if (employee.getPassword() == null) {
-            employee.setPassword("$2a$10$WkL2I5/qE2Mv3K62U1Z5sueF4J2D/yE8.O.Jv.3K5.0G9T.L/2M6a"); // 123456
+            employee.setPassword(passwordEncoder.encode("123456"));
             employee.setRole("ROLE_USER");
             employee.setIsFirstLogin(true);
         }

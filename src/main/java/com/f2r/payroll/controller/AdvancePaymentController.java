@@ -17,4 +17,16 @@ public class AdvancePaymentController {
     public ResponseEntity<Long> createAdvancePayment(@RequestBody AdvancePaymentRequest request) {
         return ResponseEntity.ok(advancePaymentService.createAdvancePayment(request).getId());
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateAdvancePayment(@PathVariable Long id, @RequestBody AdvancePaymentRequest request) {
+        advancePaymentService.updateAdvancePayment(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAdvancePayment(@PathVariable Long id) {
+        advancePaymentService.deleteAdvancePayment(id);
+        return ResponseEntity.noContent().build();
+    }
 }

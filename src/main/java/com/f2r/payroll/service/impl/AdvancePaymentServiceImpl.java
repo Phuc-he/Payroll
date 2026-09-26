@@ -32,4 +32,36 @@ public class AdvancePaymentServiceImpl implements AdvancePaymentService {
                 
         return advancePaymentRepository.save(payment);
     }
+
+    @Override
+    @Transactional
+    public AdvancePayment updateAdvancePayment(Long id, AdvancePaymentRequest request) {
+        AdvancePayment payment = advancePaymentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phiếu ứng lương #" + id));
+
+        if (request.getAmount() != null) {
+            payment.setAmount(request.getAmount());
+        }
+        if (request.getAdvanceDate() != null) {
+            payment.setAdvanceDate(request.getAdvanceDate());
+        }
+        payment.setNotes(request.getNotes());
+
+        if (request.getEmployeeId() != null && !request.getEmployeeId().isEmpty()) {
+            Employee employee = employeeRepository.findById(request.getEmployeeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + request.getEmployeeId()));
+            payment.setEmployee(employee);
+        }
+
+        return advancePaymentRepository.save(payment);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAdvancePayment(Long id) {
+        if (!advancePaymentRepository.existsById(id)) {
+            throw new IllegalArgumentException("Không tìm thấy phiếu ứng lương #" + id);
+        }
+        advancePaymentRepository.deleteById(id);
+    }
 }

@@ -1,5 +1,6 @@
 const API_BASE = '/api/payroll';
 let currentSchedules = {};
+let currentAdvanceDetails = {};
 let editingScheduleId = null;
 // Format money to VND
 const formatMoney = (amount) => {
@@ -496,8 +497,15 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
 
         let advancesHtml = '';
         if (data.advanceDetails && data.advanceDetails.length > 0) {
+            const isAdmin = currentUser && currentUser.roles && currentUser.roles.includes('ROLE_ADMIN');
+            data.advanceDetails.forEach(a => {
+                currentAdvanceDetails[a.id] = a;
+            });
             advancesHtml = `
-                <h4 style="margin-top: 2rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Lịch sử Thanh toán / Ứng lương:</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.5rem;">
+                    <h4 style="margin: 0; color: var(--text-secondary);">Lịch sử Thanh toán / Ứng lương:</h4>
+                    ${isAdmin ? '<span style="font-size: 0.8rem; color: #c084fc; font-style: italic;">💡 Bấm vào dòng để sửa ngày / số tiền</span>' : ''}
+                </div>
                 <table class="dates-table">
                     <thead>
                         <tr>
@@ -505,17 +513,27 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
                             <th>Ngày thanh toán</th>
                             <th>Số tiền</th>
                             <th>Ghi chú</th>
+                            ${isAdmin ? '<th class="text-center" style="width: 80px;">Thao tác</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
-                        ${data.advanceDetails.map(a => `
-                            <tr>
+                        ${data.advanceDetails.map(a => {
+                            const clickAttr = isAdmin ? `onclick="openEditAdvanceModal(${a.id})" style="cursor: pointer;" title="Bấm để chỉnh sửa phiếu #${a.id}"` : '';
+                            const actionTd = isAdmin ? `
+                                <td class="text-center" onclick="event.stopPropagation();">
+                                    <button type="button" class="action-btn action-btn-warning" onclick="openEditAdvanceModal(${a.id})" title="Chỉnh sửa">Sửa</button>
+                                </td>
+                            ` : '';
+                            return `
+                            <tr ${clickAttr}>
                                 <td>#${a.id}</td>
-                                <td>${a.advanceDate}</td>
-                                <td class="format-money" style="color: var(--danger)">${formatMoney(a.amount)}</td>
+                                <td><strong style="color: #38bdf8;">${a.advanceDate}</strong></td>
+                                <td class="format-money" style="color: var(--danger); font-weight: bold;">${formatMoney(a.amount)}</td>
                                 <td style="font-size: 0.85rem">${a.notes || ''}</td>
+                                ${actionTd}
                             </tr>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
@@ -626,6 +644,85 @@ document.getElementById('payForm').addEventListener('submit', async (e) => {
         resultBox.classList.remove('hidden');
     }
 });
+
+// ==========================================
+// CHỈNH SỬA / XÓA PHIẾU ỨNG LƯƠNG
+// ==========================================
+window.openEditAdvanceModal = function(id) {
+    if (!currentUser || !currentUser.roles || !currentUser.roles.includes('ROLE_ADMIN')) {
+        return;
+    }
+    const a = currentAdvanceDetails[id];
+    if (!a) return;
+
+    document.getElementById('editAdvanceId').value = a.id;
+    document.getElementById('editAdvanceIdDisplay').innerText = `#${a.id}`;
+    document.getElementById('editAdvanceDate').value = a.advanceDate;
+    document.getElementById('editAdvanceAmount').value = a.amount;
+    document.getElementById('editAdvanceNotes').value = a.notes || '';
+
+    const modal = document.getElementById('editAdvanceModal');
+    if (modal) modal.classList.remove('hidden');
+};
+
+window.closeEditAdvanceModal = function() {
+    const modal = document.getElementById('editAdvanceModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.deleteCurrentAdvance = async function() {
+    const id = document.getElementById('editAdvanceId').value;
+    if (!id) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa phiếu ứng lương #${id} không?\nSố tiền này sẽ được cộng trả lại vào phần Thực Nhận của nhân viên!`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/advance-payments/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Không thể xóa phiếu ứng lương');
+        alert(`Đã xóa thành công phiếu ứng lương #${id}!`);
+        closeEditAdvanceModal();
+        refreshAllData();
+    } catch (e) {
+        alert('Lỗi: ' + e.message);
+    }
+};
+
+const editAdvanceForm = document.getElementById('editAdvanceForm');
+if (editAdvanceForm) {
+    editAdvanceForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editAdvanceId').value;
+        const advanceDate = document.getElementById('editAdvanceDate').value;
+        const amount = parseFloat(document.getElementById('editAdvanceAmount').value);
+        const notes = document.getElementById('editAdvanceNotes').value;
+
+        if (!id || !advanceDate || isNaN(amount) || amount <= 0) {
+            alert('Vui lòng nhập đầy đủ ngày và số tiền hợp lệ!');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/advance-payments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ advanceDate, amount, notes })
+            });
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || 'Lỗi khi cập nhật phiếu ứng lương');
+            }
+
+            alert(`Cập nhật thành công phiếu ứng lương #${id}!`);
+            closeEditAdvanceModal();
+            refreshAllData();
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        }
+    });
+}
 
 
 // ==========================================

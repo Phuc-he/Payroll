@@ -164,7 +164,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Transactional(readOnly = true)
     public List<EmployeeOverviewItem> getAllEmployeeOverviews(int month, int year) {
-        List<Employee> allEmployees = employeeRepository.findAll();
+        List<Employee> allEmployees = employeeRepository.findByIsDeletedFalseOrIsDeletedIsNull();
         return allEmployees.stream().map(emp -> {
             MonthlyPayrollResponse stats = calculateMonthlyPayroll(emp.getId(), month, year);
             return EmployeeOverviewItem.builder()

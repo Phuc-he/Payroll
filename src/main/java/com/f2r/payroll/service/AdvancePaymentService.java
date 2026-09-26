@@ -5,4 +5,6 @@ import com.f2r.payroll.entity.AdvancePayment;
 
 public interface AdvancePaymentService {
     AdvancePayment createAdvancePayment(AdvancePaymentRequest request);
+    AdvancePayment updateAdvancePayment(Long id, AdvancePaymentRequest request);
+    void deleteAdvancePayment(Long id);
 }

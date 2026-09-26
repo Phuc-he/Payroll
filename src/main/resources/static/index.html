@@ -439,6 +439,35 @@
         </div>
     </div>
 
+    <!-- MODAL CHỈNH SỬA PHIẾU ỨNG LƯƠNG -->
+    <div id="editAdvanceModal" class="modal hidden" style="z-index: 9999;">
+        <div class="modal-content glass-card" style="max-width: 480px; padding: 2rem;">
+            <span class="close-btn" onclick="closeEditAdvanceModal()">&times;</span>
+            <h2 style="margin-bottom: 0.5rem; color: var(--primary); font-size: 1.35rem;">Chỉnh Sửa Phiếu Ứng Lương <span id="editAdvanceIdDisplay"></span></h2>
+            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">Cập nhật lại ngày thanh toán, số tiền hoặc ghi chú của phiếu ứng.</p>
+            <form id="editAdvanceForm" class="form-group">
+                <input type="hidden" id="editAdvanceId">
+                <div class="input-col" style="margin-bottom: 1rem;">
+                    <label>Ngày thanh toán / ứng</label>
+                    <input type="date" id="editAdvanceDate" required style="width: 100%;">
+                </div>
+                <div class="input-col" style="margin-bottom: 1rem;">
+                    <label>Số tiền (₫)</label>
+                    <input type="number" id="editAdvanceAmount" required min="1000" style="width: 100%;">
+                </div>
+                <div class="input-col" style="margin-bottom: 1.5rem;">
+                    <label>Ghi chú</label>
+                    <input type="text" id="editAdvanceNotes" placeholder="VD: Ứng lương đợt 1..." style="width: 100%;">
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center;">
+                    <button type="button" class="btn-primary" id="btnDeleteAdvance" style="background: var(--danger); margin-right: auto;" onclick="deleteCurrentAdvance()">Xóa Phiếu</button>
+                    <button type="button" class="btn-secondary" onclick="closeEditAdvanceModal()">Hủy</button>
+                    <button type="submit" class="btn-primary" style="background: var(--success);">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="app.js?v=2"></script>
     <script>
         if ('serviceWorker' in navigator) {
