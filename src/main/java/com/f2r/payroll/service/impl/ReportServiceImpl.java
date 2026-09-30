@@ -55,8 +55,9 @@ public class ReportServiceImpl implements ReportService {
         List<Timesheet> timesheets = timesheetRepository.findTimesheetsByEmployeeAndMonth(employeeId, month, year);
         List<DailyWorkDetail> workDetails = timesheets.stream()
                 .map(t -> DailyWorkDetail.builder()
-                        .workDate(t.getWorkSchedule().getWorkDate())
-                        .shift(t.getWorkSchedule().getShift())
+                        .scheduleId(t.getWorkSchedule() != null ? t.getWorkSchedule().getId() : null)
+                        .workDate(t.getWorkSchedule() != null ? t.getWorkSchedule().getWorkDate() : null)
+                        .shift(t.getWorkSchedule() != null ? t.getWorkSchedule().getShift() : "")
                         .wage(t.getWage())
                         .build())
                 .collect(Collectors.toList());

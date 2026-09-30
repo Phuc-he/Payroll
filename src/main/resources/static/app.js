@@ -143,9 +143,9 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
             
             schedulesHtml = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 1rem;">
-                    <h3 style="margin: 0;">Danh sách các ca trong tháng</h3>
-                    <button type="button" class="btn-text" style="color: var(--primary); font-weight: bold; border: 1px solid var(--primary); border-radius: 6px; padding: 6px 12px;" onclick="document.getElementById('overviewForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))">
-                        🔄 Làm mới dữ liệu
+                    <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">Danh Sách Ca Trong Tháng</h3>
+                    <button type="button" class="btn-secondary" style="padding: 5px 12px; font-size: 0.8rem;" onclick="document.getElementById('overviewForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))">
+                        🔄 Làm Mới
                     </button>
                 </div>
                 <table class="dates-table">
@@ -166,48 +166,39 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                     </thead>
                     <tbody>
                         ${data.schedules.map(s => {
-                            currentSchedules[s.id] = s; // Lưu vào biến toàn cục
+                            currentSchedules[s.id] = s;
                             if (s.workDate !== currentDate) {
                                 currentDate = s.workDate;
                                 isEvenDay = !isEvenDay;
                             }
                             const rowClass = isEvenDay ? 'alt-row' : '';
                             
-                            const shiftColors = {
-                                'SÁNG': 'background: rgba(250, 204, 21, 0.2); color: #fde047;',
-                                'CHIỀU': 'background: rgba(56, 189, 248, 0.2); color: #7dd3fc;',
-                                'TỐI': 'background: rgba(168, 85, 247, 0.2); color: #d8b4fe;'
-                            };
+                            let shiftBadge = `<span class="badge badge-slate">${s.shift || ''}</span>`;
+                            if (s.shift === 'SÁNG') shiftBadge = `<span class="badge badge-warning">SÁNG</span>`;
+                            else if (s.shift === 'CHIỀU') shiftBadge = `<span class="badge badge-info">CHIỀU</span>`;
+                            else if (s.shift === 'TỐI') shiftBadge = `<span class="badge badge-purple">TỐI</span>`;
                             
-                            const locationColors = {
-                                'Cát Quế': 'background: rgba(139, 92, 246, 0.2); color: #a78bfa;',
-                                'Thực Dung': 'background: rgba(20, 184, 166, 0.2); color: #5eead4;',
-                                'Yên Sở': 'background: rgba(249, 115, 22, 0.2); color: #fdba74;'
-                            };
-                            
-                            const shiftStyle = shiftColors[s.shift] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;';
-                            const locStyle = s.locationName ? (locationColors[s.locationName] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;') : '';
-                            
-                            const locHtml = s.locationName ? `<span style="${locStyle} padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${s.locationName}</span>` : '';
+                            const locHtml = s.locationName ? `<span class="badge badge-slate">${s.locationName}</span>` : '<span style="color: var(--text-muted);">-</span>';
+                            const isPaid = s.paymentStatus === 'ĐÃ NHẬN';
                             
                             return `
                             <tr class="${rowClass}">
-                                <td>${s.workDate}</td>
-                                <td><span style="${shiftStyle} padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${s.shift}</span></td>
+                                <td style="font-weight: 600; color: var(--text-primary);">${s.workDate}</td>
+                                <td>${shiftBadge}</td>
                                 <td>${locHtml}</td>
-                                <td class="text-center" style="font-weight: bold; color: #38bdf8;">${s.quantity || 0}</td>
-                                <td class="format-money text-right" style="color: #818cf8">${formatMoney(s.luongNhanVien)}</td>
-                                <td class="text-center" style="font-weight: bold;">${s.casualWorkerCount || 0}</td>
-                                <td class="format-money text-right" style="color: #fb7185">${formatMoney(s.casualWage)}</td>
-                                <td class="format-money text-right" style="font-weight: 500;">${formatMoney(s.thanhTien)}</td>
-                                <td class="format-money text-right" style="color: var(--success); font-weight: bold;">${formatMoney(s.tienCat)}</td>
+                                <td class="text-center" style="font-weight: 700; color: var(--primary);">${s.quantity || 0}</td>
+                                <td class="format-money text-right" style="color: #4f46e5; font-weight: 500;">${formatMoney(s.luongNhanVien)}</td>
+                                <td class="text-center" style="font-weight: 600;">${s.casualWorkerCount || 0}</td>
+                                <td class="format-money text-right" style="color: #e11d48;">${formatMoney(s.casualWage)}</td>
+                                <td class="format-money text-right" style="font-weight: 600; color: var(--text-primary);">${formatMoney(s.thanhTien)}</td>
+                                <td class="format-money text-right" style="color: var(--success); font-weight: 700;">${formatMoney(s.tienCat)}</td>
                                 <td class="text-center">
-                                    <select class="status-select" data-id="${s.id}" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.5); font-weight: bold; color: ${s.paymentStatus === 'ĐÃ NHẬN' ? 'var(--success)' : 'var(--danger)'}">
-                                        <option value="CHƯA NHẬN" ${s.paymentStatus === 'CHƯA NHẬN' ? 'selected' : ''} style="color: var(--danger)">CHƯA NHẬN</option>
-                                        <option value="ĐÃ NHẬN" ${s.paymentStatus === 'ĐÃ NHẬN' ? 'selected' : ''} style="color: var(--success)">ĐÃ NHẬN</option>
+                                    <select class="status-select ${isPaid ? 'status-paid' : 'status-unpaid'}" data-id="${s.id}">
+                                        <option value="CHƯA NHẬN" ${!isPaid ? 'selected' : ''}>CHƯA NHẬN</option>
+                                        <option value="ĐÃ NHẬN" ${isPaid ? 'selected' : ''}>ĐÃ NHẬN</option>
                                     </select>
                                 </td>
-                                <td style="display: flex; gap: 0.25rem;">
+                                <td style="display: flex; gap: 0.35rem; justify-content: center;">
                                     <button type="button" class="action-btn action-btn-primary" onclick="showScheduleDetails(${s.id})" title="Xem chi tiết">Xem</button>
                                     <button type="button" class="action-btn action-btn-warning" onclick="editWorkSchedule(${s.id})" title="Sửa ca làm việc">Sửa</button>
                                     <button type="button" class="action-btn action-btn-danger" onclick="deleteWorkSchedule(${s.id})" title="Xóa ca làm việc">
@@ -223,45 +214,52 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                 </table>
             `;
         } else {
-            schedulesHtml = '<p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 1rem;">Chưa có ca làm việc nào trong tháng này.</p>';
+            schedulesHtml = '<p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 1rem; font-style: italic;">Chưa có ca làm việc nào trong tháng này.</p>';
         }
 
         resultBox.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1rem;">
-                <div style="background: rgba(168,85,247,0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(168,85,247,0.3);">
-                    <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Tổng Tiền Đám</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #a855f7" class="format-money">${formatMoney(data.tongTienDam)}</div>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-card-label">Tổng Doanh Thu (Tiền Đám)</div>
+                    <div class="metric-card-value format-money" style="color: #7c3aed;">${formatMoney(data.tongTienDam)}</div>
+                    <div class="metric-card-sub">Tổng thu từ tất cả các ca</div>
                 </div>
-                <div style="background: rgba(99,102,241,0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(99,102,241,0.3);">
-                    <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Lương NV (Ghi sổ)</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #6366f1" class="format-money">${formatMoney(data.tongTienTraNhanVien)}</div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Lương NV Cố Định (Ghi sổ)</div>
+                    <div class="metric-card-value format-money" style="color: #4f46e5;">${formatMoney(data.tongTienTraNhanVien)}</div>
+                    <div class="metric-card-sub">Tổng công của NV hệ thống</div>
                 </div>
-                <div style="background: rgba(16,185,129,0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(16,185,129,0.3);">
-                    <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Tổng Tiền Cắt</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--success)" class="format-money">${formatMoney(data.tongTienCat)}</div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Tổng Tiền Cắt (Lợi Nhuận Gốc)</div>
+                    <div class="metric-card-value format-money" style="color: var(--success);">${formatMoney(data.tongTienCat)}</div>
+                    <div class="metric-card-sub">= Doanh thu - Lương NV</div>
                 </div>
-                <div style="background: rgba(239,68,68,0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(239,68,68,0.3);">
-                    <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Lương Thuê Ngoài</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #f43f5e" class="format-money">${formatMoney(data.tongLuongThueNgoai)}</div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Lương Thuê Ngoài</div>
+                    <div class="metric-card-value format-money" style="color: #e11d48;">${formatMoney(data.tongLuongThueNgoai)}</div>
+                    <div class="metric-card-sub">Chi trả NV ngoài tức thì</div>
                 </div>
                 
-                <!-- NEW METRICS -->
-                <div style="background: rgba(245,158,11,0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(245,158,11,0.3);">
-                    <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Công Nợ (Khách Chưa Trả)</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b" class="format-money">${formatMoney(data.congNo)}</div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Công Nợ (Khách Chưa Trả)</div>
+                    <div class="metric-card-value format-money" style="color: #d97706;">${formatMoney(data.congNo)}</div>
+                    <div class="metric-card-sub">Các ca có trạng thái CHƯA NHẬN</div>
                 </div>
-                <div style="background: rgba(56,189,248,0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(56,189,248,0.3);">
-                    <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Tiền Đã Nhận</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #38bdf8" class="format-money">${formatMoney(data.soTienDaNhan)}</div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Tiền Thực Đã Thu Về</div>
+                    <div class="metric-card-value format-money" style="color: #0284c7;">${formatMoney(data.soTienDaNhan)}</div>
+                    <div class="metric-card-sub">Các ca có trạng thái ĐÃ NHẬN</div>
                 </div>
-                <div style="background: rgba(236,72,153,0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(236,72,153,0.3);">
-                    <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Đã Ứng/Trả NV Cố Định</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #ec4899" class="format-money">${formatMoney(data.tongDaTraNhanVien)}</div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Đã Ứng / Trả NV Cố Định</div>
+                    <div class="metric-card-value format-money" style="color: #db2777;">${formatMoney(data.tongDaTraNhanVien)}</div>
+                    <div class="metric-card-sub">Tiền mặt/chuyển khoản đã xuất</div>
                 </div>
-                <div style="background: rgba(16,185,129,0.2); padding: 1.5rem; border-radius: 0.75rem; border: 2px solid rgba(16,185,129,0.6); grid-column: 1 / -1;">
-                    <div style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem; font-weight: bold;">TỒN CUỐI KỲ (Tiền Thực Tế Trong Túi)</div>
-                    <div style="font-size: 2rem; font-weight: bold; color: var(--success)" class="format-money">${formatMoney(data.tonCuoiKi)}</div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">= (Tiền Đã Nhận) - (Lương Thuê Ngoài + Đã Ứng/Trả NV Cố Định)</div>
+
+                <div class="metric-card hero-profit">
+                    <div class="metric-card-label">TỒN CUỐI KỲ (Tiền Thực Tế Còn Lại Trong Túi)</div>
+                    <div class="metric-card-value format-money">${formatMoney(data.tonCuoiKi)}</div>
+                    <div class="metric-card-sub">= (Tiền Thực Đã Thu Về) - (Lương Thuê Ngoài + Đã Ứng/Trả NV Cố Định)</div>
                 </div>
             </div>
             ${schedulesHtml}
@@ -277,15 +275,13 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                     const updateRes = await fetch(`${API_BASE}/work-schedules/${scheduleId}/status?status=${newStatus}`, { method: 'PUT' });
                     if (!updateRes.ok) throw new Error('Không thể cập nhật trạng thái');
                     
-                    // Chỉ đổi màu chữ trên UI, KHÔNG reload lại toàn bộ trang
                     if (newStatus === 'ĐÃ NHẬN') {
-                        event.target.style.color = 'var(--success)';
+                        event.target.className = 'status-select status-paid';
                     } else {
-                        event.target.style.color = 'var(--danger)';
+                        event.target.className = 'status-select status-unpaid';
                     }
                 } catch (err) {
                     alert(err.message);
-                    // Đảo ngược lại giá trị nếu lỗi
                     event.target.value = newStatus === 'ĐÃ NHẬN' ? 'CHƯA NHẬN' : 'ĐÃ NHẬN';
                 }
             });
@@ -458,27 +454,39 @@ document.getElementById('payrollForm').addEventListener('submit', async (e) => {
         let datesHtml = '';
         if (data.workDetails && data.workDetails.length > 0) {
             datesHtml = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; margin-bottom: 0.5rem;">
+                    <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Chi Tiết Các Ngày Đi Làm:</h4>
+                    <span style="font-size: 0.8rem; color: var(--primary); font-style: italic;">💡 Bấm vào dòng để xem chi tiết ca làm việc</span>
+                </div>
                 <table class="dates-table">
                     <thead>
                         <tr>
                             <th>Ngày làm</th>
                             <th>Ca</th>
-                            <th>Mức lương</th>
+                            <th class="text-right">Mức lương</th>
+                            <th style="width: 85px; text-align: center;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${data.workDetails.map(d => {
-                            const shiftColors = {
-                                'SÁNG': 'background: rgba(250, 204, 21, 0.2); color: #fde047;',
-                                'CHIỀU': 'background: rgba(56, 189, 248, 0.2); color: #7dd3fc;',
-                                'TỐI': 'background: rgba(168, 85, 247, 0.2); color: #d8b4fe;'
-                            };
-                            const shiftStyle = shiftColors[d.shift] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;';
+                            let shiftBadge = `<span class="badge badge-slate">${d.shift || ''}</span>`;
+                            if (d.shift === 'SÁNG') shiftBadge = `<span class="badge badge-warning">SÁNG</span>`;
+                            else if (d.shift === 'CHIỀU') shiftBadge = `<span class="badge badge-info">CHIỀU</span>`;
+                            else if (d.shift === 'TỐI') shiftBadge = `<span class="badge badge-purple">TỐI</span>`;
+                            else if (d.shift === 'TỔNG TIỀN CẮT THÁNG') shiftBadge = `<span class="badge badge-emerald">TIỀN CẮT</span>`;
+
+                            const clickAttr = d.scheduleId ? `class="clickable-emp-row" onclick="showScheduleDetails(${d.scheduleId})" style="cursor: pointer;" title="Bấm để xem chi tiết ca làm việc #${d.scheduleId}"` : '';
+                            const actionTd = d.scheduleId ? `
+                                <td style="text-align: center;" onclick="event.stopPropagation();">
+                                    <button type="button" class="action-btn action-btn-primary" onclick="showScheduleDetails(${d.scheduleId})" title="Xem ca">Xem Ca</button>
+                                </td>
+                            ` : '<td style="text-align: center; color: var(--text-muted);">-</td>';
                             return `
-                            <tr>
-                                <td>${d.workDate}</td>
-                                <td><span style="${shiftStyle} padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${d.shift}</span></td>
-                                <td class="format-money">${formatMoney(d.wage)}</td>
+                            <tr ${clickAttr}>
+                                <td style="font-weight: 600; color: var(--text-primary);">${d.workDate}</td>
+                                <td>${shiftBadge}</td>
+                                <td class="format-money text-right" style="font-weight: 600; color: #4f46e5;">${formatMoney(d.wage)}</td>
+                                ${actionTd}
                             </tr>
                             `;
                         }).join('')}
@@ -837,9 +845,20 @@ setDefaultWorkDate();
 // ==========================================
 // 5. HIỂN THỊ CHI TIẾT CA LÀM VIỆC (MODAL)
 // ==========================================
-window.showScheduleDetails = function(id) {
-    const s = currentSchedules[id];
-    if(!s) return;
+window.showScheduleDetails = async function(id) {
+    if (!id) return;
+    let s = currentSchedules[id];
+    if (!s) {
+        try {
+            const res = await fetch(`${API_BASE}/work-schedules/${id}/summary`);
+            if (!res.ok) throw new Error('Không thể tải thông tin ca làm việc #' + id);
+            s = await res.json();
+            currentSchedules[id] = s;
+        } catch (e) {
+            alert('Lỗi: ' + e.message);
+            return;
+        }
+    }
     
     document.getElementById('modalScheduleId').innerText = `#${s.id}`;
     
@@ -875,33 +894,59 @@ window.showScheduleDetails = function(id) {
         empsHtml = '<p style="color: var(--text-secondary); margin-top: 1rem; font-style: italic;">Không có nhân viên cố định nào làm ca này.</p>';
     }
 
+    let shiftBadge = `<span class="badge badge-slate">${s.shift || ''}</span>`;
+    if (s.shift === 'SÁNG') shiftBadge = `<span class="badge badge-warning">SÁNG</span>`;
+    else if (s.shift === 'CHIỀU') shiftBadge = `<span class="badge badge-info">CHIỀU</span>`;
+    else if (s.shift === 'TỐI') shiftBadge = `<span class="badge badge-purple">TỐI</span>`;
+
+    const isPaid = s.paymentStatus === 'ĐÃ NHẬN';
+    const statusBadge = isPaid 
+        ? `<span class="badge badge-success">ĐÃ NHẬN</span>` 
+        : `<span class="badge badge-danger">CHƯA NHẬN</span>`;
+
     document.getElementById('modalContent').innerHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
-            <div><span style="color: var(--text-secondary)">Ngày làm:</span> <br><strong>${s.workDate}</strong></div>
-            <div><span style="color: var(--text-secondary)">Ca làm:</span> <br><span style="background: rgba(45,212,191,0.2); padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">${s.shift}</span></div>
-            <div><span style="color: var(--text-secondary)">Địa điểm:</span> <br><strong style="color: var(--text-primary);">${s.locationName || 'Chưa chọn'}</strong></div>
-            <div><span style="color: var(--text-secondary)">Số NV đám:</span> <br><strong style="color: #38bdf8; font-size: 1.05rem;">${s.quantity || 0} người</strong> <span style="font-size: 0.8rem; color: var(--text-secondary);">(Cố định: ${(s.employees || []).length}, Ngoài: ${s.casualWorkerCount || 0})</span></div>
-            
-            <div style="background: rgba(168,85,247,0.1); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(168,85,247,0.3);">
-                <span style="color: var(--text-secondary); font-size: 0.9rem;">Tổng doanh thu (Tiền đám):</span> <br>
-                <span class="format-money" style="color: #a855f7; font-weight:bold; font-size: 1.25rem;">${formatMoney(s.thanhTien)}</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+            <div class="metric-card" style="padding: 0.85rem 1rem;">
+                <div class="metric-card-label">Ngày Làm</div>
+                <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem;">${s.workDate}</div>
             </div>
-            
-            <div style="background: rgba(16,185,129,0.1); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(16,185,129,0.3);">
-                <span style="color: var(--text-secondary); font-size: 0.9rem;">Tổng tiền cắt (Lợi nhuận):</span> <br>
-                <span class="format-money" style="color: var(--success); font-weight:bold; font-size: 1.25rem;">${formatMoney(s.tienCat)}</span>
+            <div class="metric-card" style="padding: 0.85rem 1rem;">
+                <div class="metric-card-label">Ca Làm & Trạng Thái</div>
+                <div style="display: flex; gap: 0.4rem; align-items: center; margin-top: 0.2rem;">
+                    ${shiftBadge} ${statusBadge}
+                </div>
             </div>
-            
-            <div><span style="color: var(--text-secondary)">Lương NV thuê ngoài:</span> <br><span class="format-money" style="color: #f43f5e; font-weight:bold;">${formatMoney(s.casualWage)}</span></div>
-            <div><span style="color: var(--text-secondary)">Lương NV cố định:</span> <br><span class="format-money" style="color: #6366f1; font-weight:bold;">${formatMoney(s.luongNhanVien)}</span></div>
-            
-            <div><span style="color: var(--text-secondary)">Tiền ăn:</span> <br><span class="format-money">${formatMoney(s.mealAllowance)}</span></div>
-            <div><span style="color: var(--text-secondary)">Trạng thái:</span> <br><span style="color: ${s.paymentStatus === 'ĐÃ NHẬN' ? 'var(--success)' : 'var(--danger)'}; font-weight: bold;">${s.paymentStatus}</span></div>
+            <div class="metric-card" style="padding: 0.85rem 1rem;">
+                <div class="metric-card-label">Địa Điểm</div>
+                <div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">${s.locationName || 'Chưa chọn'}</div>
+            </div>
+            <div class="metric-card" style="padding: 0.85rem 1rem;">
+                <div class="metric-card-label">Số NV Đám</div>
+                <div style="font-weight: 700; color: var(--primary); font-size: 1rem;">${s.quantity || 0} người <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal;">(Cố định: ${(s.employees || []).length}, Ngoài: ${s.casualWorkerCount || 0})</span></div>
+            </div>
+
+            <div class="metric-card" style="padding: 0.85rem 1rem; border-color: #ddd6fe; background: #faf5ff;">
+                <div class="metric-card-label" style="color: #6b21a8;">Tổng Doanh Thu</div>
+                <div class="metric-card-value format-money" style="color: #7c3aed; font-size: 1.2rem;">${formatMoney(s.thanhTien)}</div>
+            </div>
+            <div class="metric-card" style="padding: 0.85rem 1rem; border-color: #a7f3d0; background: #f0fdf4;">
+                <div class="metric-card-label" style="color: #065f46;">Tiền Cắt (Lợi Nhuận)</div>
+                <div class="metric-card-value format-money" style="color: var(--success); font-size: 1.2rem;">${formatMoney(s.tienCat)}</div>
+            </div>
+
+            <div class="metric-card" style="padding: 0.85rem 1rem;">
+                <div class="metric-card-label">Lương NV Thuê Ngoài</div>
+                <div class="format-money" style="color: #e11d48; font-weight: 700;">${formatMoney(s.casualWage)}</div>
+            </div>
+            <div class="metric-card" style="padding: 0.85rem 1rem;">
+                <div class="metric-card-label">Lương NV Cố Định</div>
+                <div class="format-money" style="color: #4f46e5; font-weight: 700;">${formatMoney(s.luongNhanVien)}</div>
+            </div>
         </div>
         
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-top: 1rem;">
-            <h3 style="color: var(--text-primary); margin: 0;">Danh Sách Nhân Viên Đi Làm</h3>
-            <span style="font-size: 0.8rem; color: #38bdf8; font-style: italic;">💡 Bấm vào tên NV để xem chi tiết</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 1.25rem;">
+            <h3 style="color: var(--text-primary); margin: 0; font-size: 1.05rem;">Danh Sách Nhân Viên Cố Định</h3>
+            <span style="font-size: 0.8rem; color: var(--primary); font-style: italic;">💡 Bấm tên để xem nhanh hồ sơ</span>
         </div>
         ${empsHtml}
     `;
@@ -1115,32 +1160,33 @@ async function loadAdvanceRequests() {
 
         tbody.innerHTML = requests.map(req => {
             const empName = req.employee ? `<span class="clickable-emp-name" onclick="showEmployeeDetailModal('${req.employee.id}', '${req.requestDate}')">${req.employee.fullName} (${req.employee.id})</span>` : '';
+            const dateStr = req.requestDate ? req.requestDate.split('T')[0] : '';
             
             let statusHtml = '';
-            if (req.status === 'PENDING') statusHtml = '<span style="color: #f59e0b; font-weight: bold;">Đang xử lý</span>';
-            else if (req.status === 'PAID') statusHtml = '<span style="color: var(--success); font-weight: bold;">Đã thanh toán</span>';
-            else if (req.status === 'REJECTED') statusHtml = '<span style="color: var(--danger); font-weight: bold;">Đã từ chối</span>';
+            if (req.status === 'PENDING') statusHtml = '<span class="badge badge-warning">Đang xử lý</span>';
+            else if (req.status === 'PAID') statusHtml = '<span class="badge badge-success">Đã thanh toán</span>';
+            else if (req.status === 'REJECTED') statusHtml = '<span class="badge badge-danger">Đã từ chối</span>';
                 
             let actionHtml = '-';
             if (req.status === 'PENDING' && currentUser && currentUser.roles.includes('ROLE_ADMIN')) {
                 const bName = req.employee && req.employee.bankName ? `'${req.employee.bankName}'` : 'null';
                 const bAcc = req.employee && req.employee.bankAccountNumber ? `'${req.employee.bankAccountNumber}'` : 'null';
                 actionHtml = `
-                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                        <button class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: var(--success);" onclick="payAdvanceRequest(${req.id}, ${bName}, ${bAcc}, ${req.amount}, '${empName}')">Thanh toán</button>
-                        <button class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; background: var(--danger);" onclick="rejectAdvanceRequest(${req.id})">Từ chối</button>
+                    <div style="display: flex; gap: 0.35rem; justify-content: center;">
+                        <button class="action-btn action-btn-primary" onclick="payAdvanceRequest(${req.id}, ${bName}, ${bAcc}, ${req.amount}, '${req.employee ? req.employee.fullName : ''}')">Thanh toán</button>
+                        <button class="action-btn action-btn-danger" onclick="rejectAdvanceRequest(${req.id})">Từ chối</button>
                     </div>
                 `;
             }
 
             return `
                 <tr>
-                    <td>${dateStr}</td>
+                    <td style="font-weight: 500;">${dateStr}</td>
                     <td>${empName}</td>
-                    <td class="format-money">${formatMoney(req.amount)}</td>
+                    <td class="format-money text-right" style="color: var(--danger); font-weight: 600;">${formatMoney(req.amount)}</td>
                     <td>${req.reason}</td>
-                    <td>${statusHtml}</td>
-                    <td>${actionHtml}</td>
+                    <td class="text-center">${statusHtml}</td>
+                    <td class="text-center">${actionHtml}</td>
                 </tr>
             `;
         }).join('');
@@ -1227,8 +1273,19 @@ function applyRoleBasedUI(user) {
     
     const isAdmin = user.roles.includes('ROLE_ADMIN');
     
+    // Update Sidebar User Profile Display
+    const userNameEl = document.getElementById('userNameDisplay');
+    const userRoleEl = document.getElementById('userRoleDisplay');
+    const userAvatarEl = document.getElementById('userAvatar');
+    if (userNameEl) userNameEl.innerText = user.fullName || user.username || 'Tài khoản';
+    if (userRoleEl) userRoleEl.innerText = isAdmin ? 'Quản trị viên (Admin)' : 'Nhân viên';
+    if (userAvatarEl) {
+        const initial = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
+        userAvatarEl.innerText = initial;
+    }
+    
     if (!isAdmin) {
-        // ... (admin tabs hiding)
+        // Hide Admin tabs
         if(document.getElementById('menu-overview')) document.getElementById('menu-overview').style.display = 'none';
         if(document.getElementById('menu-employees')) document.getElementById('menu-employees').style.display = 'none';
         if(document.getElementById('menu-schedules')) document.getElementById('menu-schedules').style.display = 'none';
@@ -1243,7 +1300,7 @@ function applyRoleBasedUI(user) {
         if (empIdInput) {
             empIdInput.value = user.username;
             empIdInput.readOnly = true;
-            empIdInput.style.background = 'rgba(0,0,0,0.3)';
+            empIdInput.style.backgroundColor = '#f1f5f9';
             empIdInput.style.cursor = 'not-allowed';
         }
         
@@ -1486,28 +1543,36 @@ async function loadEmployeeDetailData(employeeId, month, year) {
         // Render Work Details Table
         let workDetailsHtml = '';
         if (data.workDetails && data.workDetails.length > 0) {
-            const shiftColors = {
-                'SÁNG': 'background: rgba(250, 204, 21, 0.2); color: #fde047;',
-                'CHIỀU': 'background: rgba(56, 189, 248, 0.2); color: #7dd3fc;',
-                'TỐI': 'background: rgba(168, 85, 247, 0.2); color: #d8b4fe;'
-            };
             workDetailsHtml = `
                 <table class="dates-table" style="margin-top: 0.5rem;">
                     <thead>
                         <tr>
                             <th>Ngày làm</th>
                             <th>Ca</th>
-                            <th>Mức lương</th>
+                            <th class="text-right">Mức lương</th>
+                            <th style="width: 80px; text-align: center;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${data.workDetails.map(d => {
-                            const shiftStyle = shiftColors[d.shift] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;';
+                            let shiftBadge = `<span class="badge badge-slate">${d.shift || ''}</span>`;
+                            if (d.shift === 'SÁNG') shiftBadge = `<span class="badge badge-warning">SÁNG</span>`;
+                            else if (d.shift === 'CHIỀU') shiftBadge = `<span class="badge badge-info">CHIỀU</span>`;
+                            else if (d.shift === 'TỐI') shiftBadge = `<span class="badge badge-purple">TỐI</span>`;
+                            else if (d.shift === 'TỔNG TIỀN CẮT THÁNG') shiftBadge = `<span class="badge badge-emerald">TIỀN CẮT</span>`;
+
+                            const clickAttr = d.scheduleId ? `class="clickable-emp-row" onclick="showScheduleDetails(${d.scheduleId})" style="cursor: pointer;" title="Bấm để xem chi tiết ca làm việc #${d.scheduleId}"` : '';
+                            const actionTd = d.scheduleId ? `
+                                <td style="text-align: center;" onclick="event.stopPropagation();">
+                                    <button type="button" class="action-btn action-btn-primary" onclick="showScheduleDetails(${d.scheduleId})" title="Xem ca">Xem Ca</button>
+                                </td>
+                            ` : '<td style="text-align: center; color: var(--text-muted);">-</td>';
                             return `
-                                <tr>
-                                    <td><strong>${d.workDate}</strong></td>
-                                    <td><span style="${shiftStyle} padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${d.shift}</span></td>
-                                    <td class="format-money" style="font-weight: 600;">${formatMoney(d.wage)}</td>
+                                <tr ${clickAttr}>
+                                    <td style="font-weight: 600; color: var(--text-primary);">${d.workDate}</td>
+                                    <td>${shiftBadge}</td>
+                                    <td class="format-money text-right" style="font-weight: 600; color: #4f46e5;">${formatMoney(d.wage)}</td>
+                                    ${actionTd}
                                 </tr>
                             `;
                         }).join('')}
@@ -1531,7 +1596,7 @@ async function loadEmployeeDetailData(employeeId, month, year) {
                         <tr>
                             <th>Mã</th>
                             <th>Ngày thanh toán</th>
-                            <th>Số tiền</th>
+                            <th class="text-right">Số tiền</th>
                             <th>Ghi chú</th>
                             ${isAdmin ? '<th style="width: 60px; text-align: center;">Sửa</th>' : ''}
                         </tr>
@@ -1540,14 +1605,14 @@ async function loadEmployeeDetailData(employeeId, month, year) {
                         ${data.advanceDetails.map(a => {
                             const actionTd = isAdmin ? `
                                 <td style="text-align: center;">
-                                    <button type="button" class="action-btn action-btn-warning" style="padding: 2px 8px; font-size: 0.75rem;" onclick="openEditAdvanceModal(${a.id})" title="Chỉnh sửa">Sửa</button>
+                                    <button type="button" class="action-btn action-btn-warning" onclick="openEditAdvanceModal(${a.id})" title="Chỉnh sửa">Sửa</button>
                                 </td>
                             ` : '';
                             return `
                                 <tr>
                                     <td>#${a.id}</td>
-                                    <td><strong style="color: #38bdf8;">${a.advanceDate}</strong></td>
-                                    <td class="format-money" style="color: var(--danger); font-weight: bold;">${formatMoney(a.amount)}</td>
+                                    <td style="font-weight: 600; color: var(--text-primary);">${a.advanceDate}</td>
+                                    <td class="format-money text-right" style="color: var(--danger); font-weight: bold;">${formatMoney(a.amount)}</td>
                                     <td style="font-size: 0.85rem">${a.notes || ''}</td>
                                     ${actionTd}
                                 </tr>
@@ -1573,24 +1638,24 @@ async function loadEmployeeDetailData(employeeId, month, year) {
 
         modalBody.innerHTML = `
             <!-- Grid 4 thẻ thống kê -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
-                <div style="background: rgba(255,255,255,0.04); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(255,255,255,0.08);">
-                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Tổng số ca làm</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Tổng ca đi làm</div>
                     <div style="font-size: 1.35rem; font-weight: bold; color: var(--text-primary); margin-top: 0.25rem;">${totalShifts} <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-secondary);">ca</span></div>
                 </div>
 
-                <div style="background: rgba(99,102,241,0.08); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(99,102,241,0.25);">
-                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Tổng tiền lương</div>
-                    <div class="format-money" style="font-size: 1.2rem; font-weight: bold; color: #818cf8; margin-top: 0.25rem;">${formatMoney(data.totalWage)}</div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Tổng tiền lương</div>
+                    <div class="format-money" style="font-size: 1.2rem; font-weight: bold; color: #4f46e5; margin-top: 0.25rem;">${formatMoney(data.totalWage)}</div>
                 </div>
 
-                <div style="background: rgba(239,68,68,0.08); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(239,68,68,0.25);">
-                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Đã tạm ứng</div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Đã tạm ứng</div>
                     <div class="format-money" style="font-size: 1.2rem; font-weight: bold; color: var(--danger); margin-top: 0.25rem;">${formatMoney(data.totalAdvance)}</div>
                 </div>
 
-                <div style="background: rgba(16,185,129,0.1); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(16,185,129,0.3);">
-                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Thực nhận còn lại</div>
+                <div class="metric-card" style="padding: 0.85rem 1rem; border-color: #a7f3d0; background: #f0fdf4;">
+                    <div class="metric-card-label" style="color: #065f46;">Thực nhận còn lại</div>
                     <div class="format-money" style="font-size: 1.25rem; font-weight: bold; color: ${data.actualReceived < 0 ? 'var(--danger)' : 'var(--success)'}; margin-top: 0.25rem;">${formatMoney(data.actualReceived)}</div>
                 </div>
             </div>
