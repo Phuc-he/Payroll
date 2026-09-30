@@ -130,10 +130,6 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
     }
 
     public WorkScheduleSummaryResponse mapToSummaryResponse(WorkSchedule ws) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        String currentUsername = auth != null ? auth.getName() : null;
-
         BigDecimal thanhTien = ws.getUnitPrice().multiply(BigDecimal.valueOf(ws.getQuantity()));
 
         BigDecimal luongNhanVien = ws.getTimesheets().stream()
@@ -151,7 +147,7 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .map(t -> com.f2r.payroll.dto.EmployeeShiftDetail.builder()
                         .employeeId(t.getEmployee().getId())
                         .fullName(t.getEmployee().getFullName())
-                        .wage(isAdmin || (currentUsername != null && currentUsername.equals(t.getEmployee().getId())) ? t.getWage() : BigDecimal.ZERO)
+                        .wage(t.getWage())
                         .build())
                 .collect(Collectors.toList());
 
@@ -160,15 +156,15 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .workDate(ws.getWorkDate())
                 .shift(ws.getShift())
                 .locationName(ws.getLocation() != null ? ws.getLocation().getName() : "")
-                .unitPrice(isAdmin ? ws.getUnitPrice() : BigDecimal.ZERO)
+                .unitPrice(ws.getUnitPrice())
                 .quantity(ws.getQuantity())
-                .mealAllowance(isAdmin ? mealAllowance : BigDecimal.ZERO)
-                .casualWage(isAdmin ? casualWage : BigDecimal.ZERO)
+                .mealAllowance(mealAllowance)
+                .casualWage(casualWage)
                 .casualWorkerCount(Math.max(0, ws.getQuantity() - employees.size()))
-                .paymentStatus(isAdmin ? ws.getPaymentStatus() : "")
-                .thanhTien(isAdmin ? thanhTien : BigDecimal.ZERO)
-                .luongNhanVien(isAdmin ? luongNhanVien : BigDecimal.ZERO)
-                .tienCat(isAdmin ? tienCat : BigDecimal.ZERO)
+                .paymentStatus(ws.getPaymentStatus())
+                .thanhTien(thanhTien)
+                .luongNhanVien(luongNhanVien)
+                .tienCat(tienCat)
                 .employees(employees)
                 .build();
     }
