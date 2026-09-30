@@ -399,6 +399,43 @@
         </div>
     </div>
 
+    <!-- MODAL XEM CHI TIẾT NHÂN VIÊN (QUICK VIEW) -->
+    <div id="employeeDetailModal" class="modal hidden" style="z-index: 1050;">
+        <div class="modal-content glass-card" style="max-width: 760px; max-height: 90vh; overflow-y: auto; position: relative;">
+            <span class="close-btn" onclick="closeEmployeeDetailModal()">&times;</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; padding-right: 2rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                        <span style="font-size: 1.5rem;">👤</span>
+                        <h2 style="color: var(--text-primary); margin: 0; font-size: 1.35rem;" id="empModalFullName">Họ Tên Nhân Viên</h2>
+                        <span id="empModalId" class="clickable-emp-badge">#ID</span>
+                    </div>
+                    <div id="empModalContact" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <!-- Phone & Bank info -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bộ lọc Tháng/Năm nhanh -->
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">📅 Bảng lương tháng:</span>
+                    <span style="font-size: 0.9rem; font-weight: bold; color: #38bdf8;" id="empModalMonthYearDisplay">Tháng 9/2026</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Tháng</span>
+                    <input type="number" id="empModalMonth" min="1" max="12" style="width: 55px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white; font-size: 0.85rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Năm</span>
+                    <input type="number" id="empModalYear" min="2020" max="2099" style="width: 75px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white; font-size: 0.85rem;">
+                    <button type="button" class="btn-primary" style="padding: 4px 12px; font-size: 0.85rem;" onclick="reloadEmployeeModalMonth()">Xem</button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div id="empModalBody"></div>
+        </div>
+    </div>
+
     <style>
         .modal {
             position: fixed; z-index: 1000; left: 0; top: 0;

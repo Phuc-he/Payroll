@@ -100,6 +100,8 @@ public class ReportServiceImpl implements ReportService {
 
         return MonthlyPayrollResponse.builder()
                 .employeeId(employeeId)
+                .fullName(emp.getFullName())
+                .phoneNumber(emp.getPhoneNumber())
                 .month(month)
                 .year(year)
                 .totalWage(totalWage)

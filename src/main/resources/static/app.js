@@ -151,10 +151,10 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                 <table class="dates-table">
                     <thead>
                         <tr>
-                            <th>ID Ca</th>
                             <th>Ngày</th>
                             <th>Ca</th>
                             <th>Địa điểm</th>
+                            <th class="text-center">Số NV đám</th>
                             <th class="text-right">Lương cố định</th>
                             <th class="text-center">Số NV ngoài</th>
                             <th class="text-right">Lương ngoài</th>
@@ -192,10 +192,10 @@ document.getElementById('overviewForm').addEventListener('submit', async (e) => 
                             
                             return `
                             <tr class="${rowClass}">
-                                <td>#${s.id}</td>
                                 <td>${s.workDate}</td>
                                 <td><span style="${shiftStyle} padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${s.shift}</span></td>
                                 <td>${locHtml}</td>
+                                <td class="text-center" style="font-weight: bold; color: #38bdf8;">${s.quantity || 0}</td>
                                 <td class="format-money text-right" style="color: #818cf8">${formatMoney(s.luongNhanVien)}</td>
                                 <td class="text-center" style="font-weight: bold;">${s.casualWorkerCount || 0}</td>
                                 <td class="format-money text-right" style="color: #fb7185">${formatMoney(s.casualWage)}</td>
@@ -325,22 +325,16 @@ document.getElementById('employeesForm').addEventListener('submit', async (e) =>
                 totalThucNhan += emp.actualReceived;
                 
                 return `
-                <tr>
-                    <td>#${emp.id}</td>
-                    <td style="font-weight: bold;">${emp.fullName}</td>
+                <tr class="clickable-emp-row" onclick="showEmployeeDetailModal('${emp.id}', ${month}, ${year})" title="Bấm để xem chi tiết & bảng lương nhân viên ${emp.fullName}">
+                    <td><span class="clickable-emp-badge">#${emp.id}</span></td>
+                    <td><span class="clickable-emp-name">${emp.fullName}</span></td>
                     <td class="format-money" style="color: #6366f1">${formatMoney(emp.totalWage)}</td>
                     <td class="format-money" style="color: var(--danger)">${formatMoney(emp.totalAdvance)}</td>
                     <td class="format-money" style="color: ${emp.actualReceived < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight: bold;">
                         ${formatMoney(emp.actualReceived)}
                     </td>
-                    <td style="display: flex; gap: 0.5rem; justify-content: flex-start; align-items: center;">
-                        <button type="button" class="action-btn action-btn-primary" onclick="
-                            switchPage('payroll-page');
-                            document.getElementById('empId').value = '${emp.id}';
-                            document.getElementById('month').value = ${month};
-                            document.getElementById('year').value = ${year};
-                            document.getElementById('payrollForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                        " title="Xem chi tiết lương">
+                    <td style="display: flex; gap: 0.5rem; justify-content: flex-start; align-items: center;" onclick="event.stopPropagation();">
+                        <button type="button" class="action-btn action-btn-primary" onclick="showEmployeeDetailModal('${emp.id}', ${month}, ${year})" title="Xem chi tiết lương">
                             Chi tiết
                         </button>
                         <button type="button" class="action-btn action-btn-danger" onclick="deleteEmployee('${emp.id}', '${emp.fullName}')" title="Xóa nhân viên">
@@ -854,14 +848,24 @@ window.showScheduleDetails = function(id) {
         empsHtml = `
             <table class="dates-table" style="margin-top: 1rem;">
                 <thead>
-                    <tr><th>ID NV</th><th>Họ tên</th><th>Mức lương</th></tr>
+                    <tr>
+                        <th>ID NV</th>
+                        <th>Họ tên (Bấm xem chi tiết)</th>
+                        <th>Mức lương</th>
+                        <th style="width: 75px; text-align: center;">Thao tác</th>
+                    </tr>
                 </thead>
                 <tbody>
                     ${s.employees.map(e => `
-                        <tr>
-                            <td>${e.employeeId}</td>
-                            <td>${e.fullName}</td>
-                            <td class="format-money">${formatMoney(e.wage)}</td>
+                        <tr class="clickable-emp-row" onclick="showEmployeeDetailModal('${e.employeeId}', '${s.workDate}')" title="Bấm để xem chi tiết nhân viên ${e.fullName}">
+                            <td><span class="clickable-emp-badge">#${e.employeeId}</span></td>
+                            <td><span class="clickable-emp-name">${e.fullName}</span></td>
+                            <td class="format-money" style="font-weight: 600;">${formatMoney(e.wage)}</td>
+                            <td style="text-align: center;" onclick="event.stopPropagation();">
+                                <button type="button" class="action-btn action-btn-primary" style="padding: 2px 8px; font-size: 0.75rem;" onclick="showEmployeeDetailModal('${e.employeeId}', '${s.workDate}')">
+                                    Chi tiết
+                                </button>
+                            </td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -875,6 +879,8 @@ window.showScheduleDetails = function(id) {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
             <div><span style="color: var(--text-secondary)">Ngày làm:</span> <br><strong>${s.workDate}</strong></div>
             <div><span style="color: var(--text-secondary)">Ca làm:</span> <br><span style="background: rgba(45,212,191,0.2); padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">${s.shift}</span></div>
+            <div><span style="color: var(--text-secondary)">Địa điểm:</span> <br><strong style="color: var(--text-primary);">${s.locationName || 'Chưa chọn'}</strong></div>
+            <div><span style="color: var(--text-secondary)">Số NV đám:</span> <br><strong style="color: #38bdf8; font-size: 1.05rem;">${s.quantity || 0} người</strong> <span style="font-size: 0.8rem; color: var(--text-secondary);">(Cố định: ${(s.employees || []).length}, Ngoài: ${s.casualWorkerCount || 0})</span></div>
             
             <div style="background: rgba(168,85,247,0.1); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(168,85,247,0.3);">
                 <span style="color: var(--text-secondary); font-size: 0.9rem;">Tổng doanh thu (Tiền đám):</span> <br>
@@ -893,7 +899,10 @@ window.showScheduleDetails = function(id) {
             <div><span style="color: var(--text-secondary)">Trạng thái:</span> <br><span style="color: ${s.paymentStatus === 'ĐÃ NHẬN' ? 'var(--success)' : 'var(--danger)'}; font-weight: bold;">${s.paymentStatus}</span></div>
         </div>
         
-        <h3 style="color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-top: 1rem;">Danh Sách Nhân Viên Đi Làm</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-top: 1rem;">
+            <h3 style="color: var(--text-primary); margin: 0;">Danh Sách Nhân Viên Đi Làm</h3>
+            <span style="font-size: 0.8rem; color: #38bdf8; font-style: italic;">💡 Bấm vào tên NV để xem chi tiết</span>
+        </div>
         ${empsHtml}
     `;
     
@@ -1105,8 +1114,7 @@ async function loadAdvanceRequests() {
         }
 
         tbody.innerHTML = requests.map(req => {
-            const dateStr = new Date(req.requestDate).toLocaleString('vi-VN');
-            const empName = req.employee ? `${req.employee.fullName} (${req.employee.id})` : '';
+            const empName = req.employee ? `<span class="clickable-emp-name" onclick="showEmployeeDetailModal('${req.employee.id}', '${req.requestDate}')">${req.employee.fullName} (${req.employee.id})</span>` : '';
             
             let statusHtml = '';
             if (req.status === 'PENDING') statusHtml = '<span style="color: #f59e0b; font-weight: bold;">Đang xử lý</span>';
@@ -1390,3 +1398,246 @@ window.deleteEmployee = async function(id, name) {
         alert('Lỗi: ' + err.message);
     }
 };
+
+// ==========================================
+// 6. MODAL XEM CHI TIẾT NHÂN VIÊN (QUICK VIEW)
+// ==========================================
+let currentModalEmployeeId = null;
+
+window.showEmployeeDetailModal = async function(employeeId, contextDate, optionalYear) {
+    if (!employeeId) return;
+    currentModalEmployeeId = employeeId;
+    
+    let month, year;
+    if (contextDate && typeof contextDate === 'string' && contextDate.includes('-')) {
+        const parts = contextDate.split('-');
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+    } else if (contextDate && typeof contextDate === 'number') {
+        month = contextDate;
+        year = optionalYear ? optionalYear : (parseInt(document.getElementById('overviewYear')?.value, 10) || new Date().getFullYear());
+    } else {
+        const now = new Date();
+        month = now.getMonth() + 1;
+        year = now.getFullYear();
+    }
+    
+    document.getElementById('empModalMonth').value = month;
+    document.getElementById('empModalYear').value = year;
+    document.getElementById('empModalMonthYearDisplay').innerText = `Tháng ${month}/${year}`;
+    
+    // Show modal and loading skeleton
+    const modal = document.getElementById('employeeDetailModal');
+    const modalBody = document.getElementById('empModalBody');
+    document.getElementById('empModalFullName').innerText = 'Đang tải...';
+    document.getElementById('empModalId').innerText = `#${employeeId}`;
+    document.getElementById('empModalContact').innerHTML = '';
+    
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+            <div style="display: inline-block; width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 1rem;"></div>
+            <p style="font-size: 0.95rem;">Đang tải dữ liệu chi tiết nhân viên #${employeeId}...</p>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+    
+    await loadEmployeeDetailData(employeeId, month, year);
+};
+
+window.reloadEmployeeModalMonth = async function() {
+    if (!currentModalEmployeeId) return;
+    const month = parseInt(document.getElementById('empModalMonth').value, 10) || (new Date().getMonth() + 1);
+    const year = parseInt(document.getElementById('empModalYear').value, 10) || new Date().getFullYear();
+    document.getElementById('empModalMonthYearDisplay').innerText = `Tháng ${month}/${year}`;
+    await loadEmployeeDetailData(currentModalEmployeeId, month, year);
+};
+
+window.closeEmployeeDetailModal = function() {
+    const modal = document.getElementById('employeeDetailModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+async function loadEmployeeDetailData(employeeId, month, year) {
+    const modalBody = document.getElementById('empModalBody');
+    try {
+        const res = await fetch(`${API_BASE}/reports/monthly?employeeId=${encodeURIComponent(employeeId)}&month=${month}&year=${year}`);
+        if (!res.ok) throw new Error('Không tìm thấy dữ liệu hoặc có lỗi xảy ra');
+        const data = await res.json();
+        
+        // Cập nhật Header
+        const displayName = data.fullName || employeeId;
+        document.getElementById('empModalFullName').innerText = displayName;
+        document.getElementById('empModalId').innerText = `#${data.employeeId || employeeId}`;
+        
+        let contactHtml = '';
+        if (data.phoneNumber) {
+            contactHtml += `<span>📞 SĐT: <strong style="color: var(--text-primary);">${data.phoneNumber}</strong></span>`;
+        }
+        if (data.bankName || data.bankAccountNumber) {
+            contactHtml += `<span>🏦 Ngân hàng: <strong style="color: #38bdf8;">${data.bankName || 'N/A'}</strong> - STK: <strong style="color: var(--text-primary);">${data.bankAccountNumber || 'N/A'}</strong></span>`;
+        }
+        document.getElementById('empModalContact').innerHTML = contactHtml || '<span style="font-style: italic;">Chưa cập nhật thông tin liên hệ / ngân hàng</span>';
+        
+        // Tính tổng số ca đi làm (không tính dòng cộng tiền cắt)
+        const totalShifts = (data.workDetails && data.workDetails.length > 0) 
+            ? data.workDetails.filter(d => d.shift !== 'TỔNG TIỀN CẮT THÁNG').length 
+            : 0;
+            
+        // Render Work Details Table
+        let workDetailsHtml = '';
+        if (data.workDetails && data.workDetails.length > 0) {
+            const shiftColors = {
+                'SÁNG': 'background: rgba(250, 204, 21, 0.2); color: #fde047;',
+                'CHIỀU': 'background: rgba(56, 189, 248, 0.2); color: #7dd3fc;',
+                'TỐI': 'background: rgba(168, 85, 247, 0.2); color: #d8b4fe;'
+            };
+            workDetailsHtml = `
+                <table class="dates-table" style="margin-top: 0.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Ngày làm</th>
+                            <th>Ca</th>
+                            <th>Mức lương</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.workDetails.map(d => {
+                            const shiftStyle = shiftColors[d.shift] || 'background: rgba(156, 163, 175, 0.2); color: #d1d5db;';
+                            return `
+                                <tr>
+                                    <td><strong>${d.workDate}</strong></td>
+                                    <td><span style="${shiftStyle} padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${d.shift}</span></td>
+                                    <td class="format-money" style="font-weight: 600;">${formatMoney(d.wage)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        } else {
+            workDetailsHtml = '<p style="color: var(--text-secondary); font-size: 0.875rem; font-style: italic; padding: 0.75rem 0;">Không có ca làm việc nào trong tháng này.</p>';
+        }
+
+        // Render Advances Table
+        let advancesHtml = '';
+        if (data.advanceDetails && data.advanceDetails.length > 0) {
+            const isAdmin = currentUser && currentUser.roles && currentUser.roles.includes('ROLE_ADMIN');
+            data.advanceDetails.forEach(a => {
+                currentAdvanceDetails[a.id] = a;
+            });
+            advancesHtml = `
+                <table class="dates-table" style="margin-top: 0.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Ngày thanh toán</th>
+                            <th>Số tiền</th>
+                            <th>Ghi chú</th>
+                            ${isAdmin ? '<th style="width: 60px; text-align: center;">Sửa</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.advanceDetails.map(a => {
+                            const actionTd = isAdmin ? `
+                                <td style="text-align: center;">
+                                    <button type="button" class="action-btn action-btn-warning" style="padding: 2px 8px; font-size: 0.75rem;" onclick="openEditAdvanceModal(${a.id})" title="Chỉnh sửa">Sửa</button>
+                                </td>
+                            ` : '';
+                            return `
+                                <tr>
+                                    <td>#${a.id}</td>
+                                    <td><strong style="color: #38bdf8;">${a.advanceDate}</strong></td>
+                                    <td class="format-money" style="color: var(--danger); font-weight: bold;">${formatMoney(a.amount)}</td>
+                                    <td style="font-size: 0.85rem">${a.notes || ''}</td>
+                                    ${actionTd}
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        } else {
+            advancesHtml = '<p style="color: var(--text-secondary); font-size: 0.875rem; font-style: italic; padding: 0.75rem 0;">Chưa có khoản tạm ứng nào trong tháng này.</p>';
+        }
+
+        // QR Button if bank info available
+        let qrButtonHtml = '';
+        if (data.bankName && data.bankAccountNumber && data.actualReceived > 0) {
+            const qrContent = `Luong T${month}/${year} ${data.employeeId || employeeId}`;
+            qrButtonHtml = `
+                <button type="button" class="btn-primary" style="background: var(--success); font-size: 0.85rem; padding: 6px 14px; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="showQrModal('${data.bankName}', '${data.bankAccountNumber}', ${data.actualReceived}, '${qrContent}')">
+                    <span>📱</span> Quét QR Chuyển Lương
+                </button>
+            `;
+        }
+
+        modalBody.innerHTML = `
+            <!-- Grid 4 thẻ thống kê -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div style="background: rgba(255,255,255,0.04); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Tổng số ca làm</div>
+                    <div style="font-size: 1.35rem; font-weight: bold; color: var(--text-primary); margin-top: 0.25rem;">${totalShifts} <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-secondary);">ca</span></div>
+                </div>
+
+                <div style="background: rgba(99,102,241,0.08); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(99,102,241,0.25);">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Tổng tiền lương</div>
+                    <div class="format-money" style="font-size: 1.2rem; font-weight: bold; color: #818cf8; margin-top: 0.25rem;">${formatMoney(data.totalWage)}</div>
+                </div>
+
+                <div style="background: rgba(239,68,68,0.08); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(239,68,68,0.25);">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Đã tạm ứng</div>
+                    <div class="format-money" style="font-size: 1.2rem; font-weight: bold; color: var(--danger); margin-top: 0.25rem;">${formatMoney(data.totalAdvance)}</div>
+                </div>
+
+                <div style="background: rgba(16,185,129,0.1); padding: 0.85rem; border-radius: 0.6rem; border: 1px solid rgba(16,185,129,0.3);">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Thực nhận còn lại</div>
+                    <div class="format-money" style="font-size: 1.25rem; font-weight: bold; color: ${data.actualReceived < 0 ? 'var(--danger)' : 'var(--success)'}; margin-top: 0.25rem;">${formatMoney(data.actualReceived)}</div>
+                </div>
+            </div>
+
+            <!-- Danh sách ca làm việc -->
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-primary); margin: 0;">📅 Danh Sách Ca Làm Việc Trong Tháng</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">${totalShifts} ca</span>
+                </div>
+                ${workDetailsHtml}
+            </div>
+
+            <!-- Lịch sử ứng lương -->
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-primary); margin: 0;">💸 Lịch Sử Tạm Ứng / Thanh Toán</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">${(data.advanceDetails || []).length} phiếu</span>
+                </div>
+                ${advancesHtml}
+            </div>
+
+            <!-- Bottom Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                    ${qrButtonHtml}
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" class="btn-secondary" onclick="closeEmployeeDetailModal()">Đóng</button>
+                    <button type="button" class="btn-primary" onclick="
+                        closeEmployeeDetailModal();
+                        switchPage('payroll-page');
+                        document.getElementById('empId').value = '${data.employeeId || employeeId}';
+                        document.getElementById('month').value = ${month};
+                        document.getElementById('year').value = ${year};
+                        document.getElementById('payrollForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    ">Xem Bảng Lương Đầy Đủ →</button>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        modalBody.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--danger);">
+                <p style="font-weight: bold; margin-bottom: 0.5rem;">⚠️ Lỗi khi tải dữ liệu:</p>
+                <p style="color: var(--text-secondary);">${e.message}</p>
+                <button type="button" class="btn-secondary" style="margin-top: 1rem;" onclick="closeEmployeeDetailModal()">Đóng</button>
+            </div>
+        `;
+    }
+}
