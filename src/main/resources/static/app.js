@@ -861,38 +861,9 @@ window.showScheduleDetails = async function(id) {
     }
     
     document.getElementById('modalScheduleId').innerText = `#${s.id}`;
-    
-    let empsHtml = '';
-    if (s.employees && s.employees.length > 0) {
-        empsHtml = `
-            <table class="dates-table" style="margin-top: 1rem;">
-                <thead>
-                    <tr>
-                        <th>ID NV</th>
-                        <th>Họ tên (Bấm xem chi tiết)</th>
-                        <th>Mức lương</th>
-                        <th style="width: 75px; text-align: center;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${s.employees.map(e => `
-                        <tr class="clickable-emp-row" onclick="showEmployeeDetailModal('${e.employeeId}', '${s.workDate}')" title="Bấm để xem chi tiết nhân viên ${e.fullName}">
-                            <td><span class="clickable-emp-badge">#${e.employeeId}</span></td>
-                            <td><span class="clickable-emp-name">${e.fullName}</span></td>
-                            <td class="format-money" style="font-weight: 600;">${formatMoney(e.wage)}</td>
-                            <td style="text-align: center;" onclick="event.stopPropagation();">
-                                <button type="button" class="action-btn action-btn-primary" style="padding: 2px 8px; font-size: 0.75rem;" onclick="showEmployeeDetailModal('${e.employeeId}', '${s.workDate}')">
-                                    Chi tiết
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-    } else {
-        empsHtml = '<p style="color: var(--text-secondary); margin-top: 1rem; font-style: italic;">Không có nhân viên cố định nào làm ca này.</p>';
-    }
+
+    const isAdmin = currentUser && currentUser.roles && currentUser.roles.includes('ROLE_ADMIN');
+    const currentUsername = currentUser ? currentUser.username : '';
 
     let shiftBadge = `<span class="badge badge-slate">${s.shift || ''}</span>`;
     if (s.shift === 'SÁNG') shiftBadge = `<span class="badge badge-warning">SÁNG</span>`;
@@ -904,49 +875,149 @@ window.showScheduleDetails = async function(id) {
         ? `<span class="badge badge-success">ĐÃ NHẬN</span>` 
         : `<span class="badge badge-danger">CHƯA NHẬN</span>`;
 
-    document.getElementById('modalContent').innerHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-            <div class="metric-card" style="padding: 0.85rem 1rem;">
-                <div class="metric-card-label">Ngày Làm</div>
-                <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem;">${s.workDate}</div>
-            </div>
-            <div class="metric-card" style="padding: 0.85rem 1rem;">
-                <div class="metric-card-label">Ca Làm & Trạng Thái</div>
-                <div style="display: flex; gap: 0.4rem; align-items: center; margin-top: 0.2rem;">
-                    ${shiftBadge} ${statusBadge}
+    let topCardsHtml = '';
+    if (isAdmin) {
+        topCardsHtml = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Ngày Làm</div>
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem;">${s.workDate}</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Ca Làm & Trạng Thái</div>
+                    <div style="display: flex; gap: 0.4rem; align-items: center; margin-top: 0.2rem;">
+                        ${shiftBadge} ${statusBadge}
+                    </div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Địa Điểm</div>
+                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">${s.locationName || 'Chưa chọn'}</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Số NV Đám</div>
+                    <div style="font-weight: 700; color: var(--primary); font-size: 1rem;">${s.quantity || 0} người <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal;">(Cố định: ${(s.employees || []).length}, Ngoài: ${s.casualWorkerCount || 0})</span></div>
+                </div>
+
+                <div class="metric-card" style="padding: 0.85rem 1rem; border-color: #ddd6fe; background: #faf5ff;">
+                    <div class="metric-card-label" style="color: #6b21a8;">Tổng Doanh Thu</div>
+                    <div class="metric-card-value format-money" style="color: #7c3aed; font-size: 1.2rem;">${formatMoney(s.thanhTien)}</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem; border-color: #a7f3d0; background: #f0fdf4;">
+                    <div class="metric-card-label" style="color: #065f46;">Tiền Cắt (Lợi Nhuận)</div>
+                    <div class="metric-card-value format-money" style="color: var(--success); font-size: 1.2rem;">${formatMoney(s.tienCat)}</div>
+                </div>
+
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Lương NV Thuê Ngoài</div>
+                    <div class="format-money" style="color: #e11d48; font-weight: 700;">${formatMoney(s.casualWage)}</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Lương NV Cố Định</div>
+                    <div class="format-money" style="color: #4f46e5; font-weight: 700;">${formatMoney(s.luongNhanVien)}</div>
                 </div>
             </div>
-            <div class="metric-card" style="padding: 0.85rem 1rem;">
-                <div class="metric-card-label">Địa Điểm</div>
-                <div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">${s.locationName || 'Chưa chọn'}</div>
-            </div>
-            <div class="metric-card" style="padding: 0.85rem 1rem;">
-                <div class="metric-card-label">Số NV Đám</div>
-                <div style="font-weight: 700; color: var(--primary); font-size: 1rem;">${s.quantity || 0} người <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal;">(Cố định: ${(s.employees || []).length}, Ngoài: ${s.casualWorkerCount || 0})</span></div>
-            </div>
+        `;
+    } else {
+        // Tìm lương của chính nhân viên này trong ca
+        let myWage = 0;
+        if (s.employees) {
+            const me = s.employees.find(e => e.employeeId === currentUsername);
+            if (me && me.wage) myWage = me.wage;
+        }
 
-            <div class="metric-card" style="padding: 0.85rem 1rem; border-color: #ddd6fe; background: #faf5ff;">
-                <div class="metric-card-label" style="color: #6b21a8;">Tổng Doanh Thu</div>
-                <div class="metric-card-value format-money" style="color: #7c3aed; font-size: 1.2rem;">${formatMoney(s.thanhTien)}</div>
+        topCardsHtml = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Ngày Làm</div>
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem;">${s.workDate}</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Ca Làm Việc</div>
+                    <div style="margin-top: 0.2rem;">${shiftBadge}</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Địa Điểm</div>
+                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">${s.locationName || 'Chưa chọn'}</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="metric-card-label">Số Lượng NV Đi Ca</div>
+                    <div style="font-weight: 700; color: var(--primary); font-size: 1rem;">${s.quantity || 0} người</div>
+                </div>
+                <div class="metric-card" style="grid-column: 1 / -1; padding: 1rem 1.25rem; border-color: #bfdbfe; background: #eff6ff;">
+                    <div class="metric-card-label" style="color: #1e40af;">Tiền Công Của Bạn Trong Ca Này</div>
+                    <div class="metric-card-value format-money" style="color: #1d4ed8; font-size: 1.5rem;">${formatMoney(myWage)}</div>
+                </div>
             </div>
-            <div class="metric-card" style="padding: 0.85rem 1rem; border-color: #a7f3d0; background: #f0fdf4;">
-                <div class="metric-card-label" style="color: #065f46;">Tiền Cắt (Lợi Nhuận)</div>
-                <div class="metric-card-value format-money" style="color: var(--success); font-size: 1.2rem;">${formatMoney(s.tienCat)}</div>
-            </div>
+        `;
+    }
+    
+    let empsHtml = '';
+    if (s.employees && s.employees.length > 0) {
+        if (isAdmin) {
+            empsHtml = `
+                <table class="dates-table" style="margin-top: 1rem;">
+                    <thead>
+                        <tr>
+                            <th>ID NV</th>
+                            <th>Họ tên (Bấm xem chi tiết)</th>
+                            <th class="text-right">Mức lương</th>
+                            <th style="width: 75px; text-align: center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${s.employees.map(e => `
+                            <tr class="clickable-emp-row" onclick="showEmployeeDetailModal('${e.employeeId}', '${s.workDate}')" title="Bấm để xem chi tiết nhân viên ${e.fullName}">
+                                <td><span class="clickable-emp-badge">#${e.employeeId}</span></td>
+                                <td><span class="clickable-emp-name">${e.fullName}</span></td>
+                                <td class="format-money text-right" style="font-weight: 600; color: #4f46e5;">${formatMoney(e.wage)}</td>
+                                <td style="text-align: center;" onclick="event.stopPropagation();">
+                                    <button type="button" class="action-btn action-btn-primary" style="padding: 2px 8px; font-size: 0.75rem;" onclick="showEmployeeDetailModal('${e.employeeId}', '${s.workDate}')">
+                                        Chi tiết
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } else {
+            // Cho nhân viên thường: chỉ xem danh sách đồng nghiệp cùng làm trong ca, KHÔNG hiện lương của người khác
+            empsHtml = `
+                <table class="dates-table" style="margin-top: 0.75rem;">
+                    <thead>
+                        <tr>
+                            <th>Mã NV</th>
+                            <th>Họ và Tên</th>
+                            <th>Vai trò</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${s.employees.map(e => {
+                            const isMe = e.employeeId === currentUsername;
+                            return `
+                            <tr style="${isMe ? 'background: #eff6ff;' : ''}">
+                                <td><span class="clickable-emp-badge" style="cursor: default;">#${e.employeeId}</span></td>
+                                <td style="font-weight: 600; color: var(--text-primary);">${e.fullName} ${isMe ? '<span class="badge badge-info" style="margin-left: 0.4rem;">Bạn</span>' : ''}</td>
+                                <td style="color: var(--text-secondary); font-size: 0.85rem;">${isMe ? 'Nhân viên (Bạn)' : 'Đồng nghiệp cùng ca'}</td>
+                            </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    } else {
+        empsHtml = '<p style="color: var(--text-secondary); margin-top: 1rem; font-style: italic;">Không có nhân viên cố định nào làm ca này.</p>';
+    }
 
-            <div class="metric-card" style="padding: 0.85rem 1rem;">
-                <div class="metric-card-label">Lương NV Thuê Ngoài</div>
-                <div class="format-money" style="color: #e11d48; font-weight: 700;">${formatMoney(s.casualWage)}</div>
-            </div>
-            <div class="metric-card" style="padding: 0.85rem 1rem;">
-                <div class="metric-card-label">Lương NV Cố Định</div>
-                <div class="format-money" style="color: #4f46e5; font-weight: 700;">${formatMoney(s.luongNhanVien)}</div>
-            </div>
-        </div>
-        
+    const sectionTitle = isAdmin ? 'Danh Sách Nhân Viên Cố Định' : 'Đồng Nghiệp Cùng Làm Ca Này';
+    const sectionHint = isAdmin ? '<span style="font-size: 0.8rem; color: var(--primary); font-style: italic;">💡 Bấm tên để xem nhanh hồ sơ</span>' : '';
+
+    document.getElementById('modalContent').innerHTML = `
+        ${topCardsHtml}
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 1.25rem;">
-            <h3 style="color: var(--text-primary); margin: 0; font-size: 1.05rem;">Danh Sách Nhân Viên Cố Định</h3>
-            <span style="font-size: 0.8rem; color: var(--primary); font-style: italic;">💡 Bấm tên để xem nhanh hồ sơ</span>
+            <h3 style="color: var(--text-primary); margin: 0; font-size: 1.05rem;">${sectionTitle}</h3>
+            ${sectionHint}
         </div>
         ${empsHtml}
     `;
@@ -1463,6 +1534,13 @@ let currentModalEmployeeId = null;
 
 window.showEmployeeDetailModal = async function(employeeId, contextDate, optionalYear) {
     if (!employeeId) return;
+
+    const isAdmin = currentUser && currentUser.roles && currentUser.roles.includes('ROLE_ADMIN');
+    if (!isAdmin && currentUser && employeeId !== currentUser.username) {
+        alert('Bạn chỉ có quyền xem bảng lương của chính mình!');
+        return;
+    }
+
     currentModalEmployeeId = employeeId;
     
     let month, year;

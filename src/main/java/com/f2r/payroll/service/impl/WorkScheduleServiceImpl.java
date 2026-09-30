@@ -12,6 +12,8 @@ import com.f2r.payroll.repository.LocationRepository;
 import com.f2r.payroll.repository.WorkScheduleRepository;
 import com.f2r.payroll.service.WorkScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,6 +130,10 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
     }
 
     public WorkScheduleSummaryResponse mapToSummaryResponse(WorkSchedule ws) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        String currentUsername = auth != null ? auth.getName() : null;
+
         BigDecimal thanhTien = ws.getUnitPrice().multiply(BigDecimal.valueOf(ws.getQuantity()));
 
         BigDecimal luongNhanVien = ws.getTimesheets().stream()
@@ -145,7 +151,7 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .map(t -> com.f2r.payroll.dto.EmployeeShiftDetail.builder()
                         .employeeId(t.getEmployee().getId())
                         .fullName(t.getEmployee().getFullName())
-                        .wage(t.getWage())
+                        .wage(isAdmin || (currentUsername != null && currentUsername.equals(t.getEmployee().getId())) ? t.getWage() : BigDecimal.ZERO)
                         .build())
                 .collect(Collectors.toList());
 
@@ -154,15 +160,15 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .workDate(ws.getWorkDate())
                 .shift(ws.getShift())
                 .locationName(ws.getLocation() != null ? ws.getLocation().getName() : "")
-                .unitPrice(ws.getUnitPrice())
+                .unitPrice(isAdmin ? ws.getUnitPrice() : BigDecimal.ZERO)
                 .quantity(ws.getQuantity())
-                .mealAllowance(mealAllowance)
-                .casualWage(casualWage)
+                .mealAllowance(isAdmin ? mealAllowance : BigDecimal.ZERO)
+                .casualWage(isAdmin ? casualWage : BigDecimal.ZERO)
                 .casualWorkerCount(Math.max(0, ws.getQuantity() - employees.size()))
-                .paymentStatus(ws.getPaymentStatus())
-                .thanhTien(thanhTien)
-                .luongNhanVien(luongNhanVien)
-                .tienCat(tienCat)
+                .paymentStatus(isAdmin ? ws.getPaymentStatus() : "")
+                .thanhTien(isAdmin ? thanhTien : BigDecimal.ZERO)
+                .luongNhanVien(isAdmin ? luongNhanVien : BigDecimal.ZERO)
+                .tienCat(isAdmin ? tienCat : BigDecimal.ZERO)
                 .employees(employees)
                 .build();
     }
