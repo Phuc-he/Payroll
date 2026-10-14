@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 public class EmployeeOverviewItem {
     private String id;
     private String fullName;
+    private String phoneNumber;
     private BigDecimal totalWage;
     private BigDecimal totalAdvance;
     private BigDecimal actualReceived;

@@ -324,14 +324,21 @@ document.getElementById('employeesForm').addEventListener('submit', async (e) =>
                 <tr class="clickable-emp-row" onclick="showEmployeeDetailModal('${emp.id}', ${month}, ${year})" title="Bấm để xem chi tiết & bảng lương nhân viên ${emp.fullName}">
                     <td><span class="clickable-emp-badge">#${emp.id}</span></td>
                     <td><span class="clickable-emp-name">${emp.fullName}</span></td>
+                    <td>${emp.phoneNumber ? `<span style="font-weight: 500; color: #0284c7; white-space: nowrap;">📱 ${emp.phoneNumber}</span>` : `<span style="color: var(--text-secondary); font-style: italic; font-size: 0.8rem;">Chưa có</span>`}</td>
                     <td class="format-money" style="color: #6366f1">${formatMoney(emp.totalWage)}</td>
                     <td class="format-money" style="color: var(--danger)">${formatMoney(emp.totalAdvance)}</td>
                     <td class="format-money" style="color: ${emp.actualReceived < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight: bold;">
                         ${formatMoney(emp.actualReceived)}
                     </td>
-                    <td style="display: flex; gap: 0.5rem; justify-content: flex-start; align-items: center;" onclick="event.stopPropagation();">
+                    <td style="display: flex; gap: 0.35rem; justify-content: flex-start; align-items: center;" onclick="event.stopPropagation();">
                         <button type="button" class="action-btn action-btn-primary" onclick="showEmployeeDetailModal('${emp.id}', ${month}, ${year})" title="Xem chi tiết lương">
                             Chi tiết
+                        </button>
+                        <button type="button" class="action-btn action-btn-warning" onclick="openEditEmployeeModal('${emp.id}')" title="Sửa thông tin hồ sơ nhân viên">
+                            Sửa
+                        </button>
+                        <button type="button" class="action-btn action-btn-info" onclick="confirmResetPassword('${emp.id}', '${emp.fullName}')" title="Đặt lại mật khẩu về mặc định 123456">
+                            Reset MK
                         </button>
                         <button type="button" class="action-btn action-btn-danger" onclick="deleteEmployee('${emp.id}', '${emp.fullName}')" title="Xóa nhân viên">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -349,6 +356,7 @@ document.getElementById('employeesForm').addEventListener('submit', async (e) =>
                         <tr>
                             <th>ID</th>
                             <th>Họ Tên</th>
+                            <th>SĐT (Zalo)</th>
                             <th>Tổng Lương (Ghi Sổ)</th>
                             <th>Đã Ứng / Trả</th>
                             <th>Thực Nhận (Còn Lại)</th>
@@ -360,7 +368,7 @@ document.getElementById('employeesForm').addEventListener('submit', async (e) =>
                     </tbody>
                     <tfoot style="background: rgba(255,255,255,0.05); font-weight: bold;">
                         <tr>
-                            <td colspan="2" style="text-align: right; padding: 1rem;">TỔNG CỘNG TẤT CẢ NV:</td>
+                            <td colspan="3" style="text-align: right; padding: 1rem;">TỔNG CỘNG TẤT CẢ NV:</td>
                             <td class="format-money" style="color: #6366f1">${formatMoney(totalTongLuong)}</td>
                             <td class="format-money" style="color: var(--danger)">${formatMoney(totalDaUng)}</td>
                             <td class="format-money" style="color: var(--success)">${formatMoney(totalThucNhan)}</td>
@@ -1396,22 +1404,28 @@ function applyRoleBasedUI(user) {
         }
     }
     
+    if (user.phoneNumber && document.getElementById('myPhone')) {
+        document.getElementById('myPhone').value = user.phoneNumber;
+    }
+
     if (user.bankName && user.bankAccountNumber) {
         renderMyQr(user.bankName, user.bankAccountNumber);
     }
     
     document.getElementById('profileForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const bankName = document.getElementById('myBankName').value;
-        const bankAccountNumber = document.getElementById('myBankAcc').value;
+        const phoneNumber = document.getElementById('myPhone') ? document.getElementById('myPhone').value.trim() : null;
+        const bankName = document.getElementById('myBankName').value.trim();
+        const bankAccountNumber = document.getElementById('myBankAcc').value.trim();
         try {
             const res = await fetch(`${API_BASE}/employees/me/bank`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bankName, bankAccountNumber })
+                body: JSON.stringify({ phoneNumber, bankName, bankAccountNumber })
             });
-            if (!res.ok) throw new Error('Không thể cập nhật ngân hàng');
-            alert('Cập nhật tài khoản ngân hàng thành công!');
+            if (!res.ok) throw new Error('Không thể cập nhật thông tin');
+            alert('Cập nhật thông tin cá nhân & ngân hàng thành công!');
+            currentUser.phoneNumber = phoneNumber;
             currentUser.bankName = bankName;
             currentUser.bankAccountNumber = bankAccountNumber;
             renderMyQr(bankName, bankAccountNumber);
@@ -1613,6 +1627,12 @@ async function loadEmployeeDetailData(employeeId, month, year) {
         }
         document.getElementById('empModalContact').innerHTML = contactHtml || '<span style="font-style: italic;">Chưa cập nhật thông tin liên hệ / ngân hàng</span>';
         
+        // Hiển thị nút Thao tác Admin nếu có quyền
+        const isAdminUser = currentUser && currentUser.roles && currentUser.roles.includes('ROLE_ADMIN');
+        const adminActionsEl = document.getElementById('empModalAdminActions');
+        if (adminActionsEl) {
+            adminActionsEl.style.display = isAdminUser ? 'flex' : 'none';
+        }
         // Tính tổng số ca đi làm (không tính dòng cộng tiền cắt)
         const totalShifts = (data.workDetails && data.workDetails.length > 0) 
             ? data.workDetails.filter(d => d.shift !== 'TỔNG TIỀN CẮT THÁNG').length 
@@ -1783,4 +1803,190 @@ async function loadEmployeeDetailData(employeeId, month, year) {
             </div>
         `;
     }
+}
+
+// ==========================================
+// 7. QUẢN LÝ NHÂN SỰ NÂNG CAO (SỬA & RESET MẬT KHẨU)
+// ==========================================
+let currentEditingEmpId = null;
+
+window.openEditEmployeeModal = async function(empId) {
+    if (!currentUser || !currentUser.roles || !currentUser.roles.includes('ROLE_ADMIN')) {
+        alert('Chỉ Quản trị viên mới có quyền chỉnh sửa nhân viên!');
+        return;
+    }
+    
+    currentEditingEmpId = empId;
+    document.getElementById('editEmpId').value = empId;
+    document.getElementById('editEmpIdBadge').innerText = `#${empId}`;
+    
+    // Clear inputs while fetching
+    document.getElementById('editEmpFullName').value = 'Đang tải...';
+    document.getElementById('editEmpPhone').value = '';
+    document.getElementById('editEmpBankName').value = '';
+    document.getElementById('editEmpBankAcc').value = '';
+    document.getElementById('editEmpIsActive').value = 'true';
+    const qrDiv = document.getElementById('editEmpQrPreview');
+    if (qrDiv) qrDiv.style.display = 'none';
+
+    const modal = document.getElementById('editEmployeeModal');
+    if (modal) modal.classList.remove('hidden');
+
+    try {
+        const res = await fetch(`${API_BASE}/employees/${encodeURIComponent(empId)}`);
+        if (!res.ok) throw new Error('Không thể tải thông tin nhân viên');
+        const emp = await res.json();
+
+        document.getElementById('editEmpFullName').value = emp.fullName || '';
+        document.getElementById('editEmpPhone').value = emp.phoneNumber || '';
+        document.getElementById('editEmpBankName').value = emp.bankName || '';
+        document.getElementById('editEmpBankAcc').value = emp.bankAccountNumber || '';
+        document.getElementById('editEmpIsActive').value = emp.isActive !== false ? 'true' : 'false';
+
+        updateEditEmpQrPreview();
+    } catch (err) {
+        alert('Lỗi tải thông tin: ' + err.message);
+        closeEditEmployeeModal();
+    }
+};
+
+window.closeEditEmployeeModal = function() {
+    const modal = document.getElementById('editEmployeeModal');
+    if (modal) modal.classList.add('hidden');
+    currentEditingEmpId = null;
+};
+
+function updateEditEmpQrPreview() {
+    const bankName = document.getElementById('editEmpBankName')?.value?.trim();
+    const bankAcc = document.getElementById('editEmpBankAcc')?.value?.trim();
+    const qrDiv = document.getElementById('editEmpQrPreview');
+    const qrImg = document.getElementById('editEmpQrImg');
+
+    if (bankName && bankAcc && qrDiv && qrImg) {
+        const safeBankId = getStandardBankId(bankName);
+        qrImg.src = `https://img.vietqr.io/image/${safeBankId}-${bankAcc}-compact2.png`;
+        qrDiv.style.display = 'block';
+    } else if (qrDiv) {
+        qrDiv.style.display = 'none';
+    }
+}
+
+document.getElementById('editEmpBankName')?.addEventListener('input', updateEditEmpQrPreview);
+document.getElementById('editEmpBankAcc')?.addEventListener('input', updateEditEmpQrPreview);
+
+window.openEditEmployeeModalFromQuickView = function() {
+    if (!currentModalEmployeeId) return;
+    openEditEmployeeModal(currentModalEmployeeId);
+};
+
+window.triggerResetPasswordFromQuickView = function() {
+    if (!currentModalEmployeeId) return;
+    const name = document.getElementById('empModalFullName')?.innerText || currentModalEmployeeId;
+    confirmResetPassword(currentModalEmployeeId, name);
+};
+
+window.triggerResetPasswordFromEditModal = function() {
+    const empId = document.getElementById('editEmpId')?.value;
+    const empName = document.getElementById('editEmpFullName')?.value || empId;
+    if (empId) {
+        confirmResetPassword(empId, empName);
+    }
+};
+
+window.confirmResetPassword = async function(empId, empName) {
+    if (!currentUser || !currentUser.roles || !currentUser.roles.includes('ROLE_ADMIN')) {
+        alert('Chỉ Quản trị viên mới có quyền đặt lại mật khẩu!');
+        return;
+    }
+
+    if (empId === 'admin') {
+        alert('Không thể đặt lại mật khẩu của tài khoản Admin hệ thống!');
+        return;
+    }
+
+    const confirmMsg = `XÁC NHẬN ĐẶT LẠI MẬT KHẨU:\n\nBạn có chắc chắn muốn đặt lại mật khẩu của nhân viên "${empName} (#${empId})" về mặc định "123456"?\n\nNhân viên sẽ được yêu cầu đổi mật khẩu mới ở lần đăng nhập tiếp theo.`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/employees/${encodeURIComponent(empId)}/reset-password`, {
+            method: 'POST'
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(errText || 'Lỗi khi đặt lại mật khẩu');
+        }
+        const data = await res.json();
+        alert(`✅ ${data.message || 'Đặt lại mật khẩu thành công!'}`);
+    } catch (err) {
+        alert('Lỗi: ' + err.message);
+    }
+};
+
+const editEmpForm = document.getElementById('editEmployeeForm');
+if (editEmpForm) {
+    editEmpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const empId = document.getElementById('editEmpId').value;
+        const fullName = document.getElementById('editEmpFullName').value.trim();
+        const phoneNumber = document.getElementById('editEmpPhone').value.trim();
+        const bankName = document.getElementById('editEmpBankName').value.trim();
+        const bankAccountNumber = document.getElementById('editEmpBankAcc').value.trim();
+        const isActive = document.getElementById('editEmpIsActive').value === 'true';
+
+        if (!fullName) {
+            alert('Vui lòng nhập họ và tên nhân viên!');
+            return;
+        }
+
+        const payload = {
+            id: empId,
+            fullName,
+            phoneNumber,
+            bankName,
+            bankAccountNumber,
+            isActive
+        };
+
+        const submitBtn = editEmpForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Đang lưu...';
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/employees/${encodeURIComponent(empId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || 'Lỗi khi cập nhật thông tin nhân viên');
+            }
+
+            alert(`✅ Cập nhật thông tin nhân viên "${fullName} (#${empId})" thành công!`);
+            closeEditEmployeeModal();
+
+            // Tải lại ngầm gợi ý nhân viên & danh sách nhân viên
+            loadEmployees();
+            const empForm = document.getElementById('employeesForm');
+            if (empForm) {
+                empForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+            // Nếu modal chi tiết của nhân viên này đang mở, reload lại
+            if (currentModalEmployeeId === empId) {
+                const m = parseInt(document.getElementById('empModalMonth')?.value, 10);
+                const y = parseInt(document.getElementById('empModalYear')?.value, 10);
+                if (m && y) loadEmployeeDetailData(empId, m, y);
+            }
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Lưu Thay Đổi';
+            }
+        }
+    });
 }

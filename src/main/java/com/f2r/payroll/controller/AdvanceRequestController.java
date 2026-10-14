@@ -52,14 +52,8 @@ public class AdvanceRequestController {
 
         advanceRequestRepository.save(req);
 
-        // Send Telegram Notification
-        String message = String.format("🚨 <b>YÊU CẦU ỨNG LƯƠNG MỚI</b> 🚨\n\n" +
-                        "👤 <b>Nhân viên:</b> %s (%s)\n" +
-                        "💰 <b>Số tiền:</b> %,.0f VNĐ\n" +
-                        "📝 <b>Lý do:</b> %s\n\n" +
-                        "<i>Hãy truy cập phần mềm bằng tài khoản Admin để duyệt!</i>",
-                emp.getFullName(), emp.getId(), amount, reason);
-        telegramService.sendMessage(message);
+        // Send Telegram Notification with interactive action buttons
+        telegramService.sendAdvanceRequestNotification(req.getId(), emp.getFullName(), emp.getId(), amount, reason);
 
         return ResponseEntity.ok(toDto(req));
     }

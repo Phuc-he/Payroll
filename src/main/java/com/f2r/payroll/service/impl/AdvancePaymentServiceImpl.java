@@ -16,6 +16,7 @@ public class AdvancePaymentServiceImpl implements AdvancePaymentService {
 
     private final AdvancePaymentRepository advancePaymentRepository;
     private final EmployeeRepository employeeRepository;
+    private final com.f2r.payroll.service.ZaloNotificationService zaloNotificationService;
 
     @Override
     @Transactional
@@ -30,7 +31,12 @@ public class AdvancePaymentServiceImpl implements AdvancePaymentService {
                 .notes(request.getNotes())
                 .build();
                 
-        return advancePaymentRepository.save(payment);
+        AdvancePayment saved = advancePaymentRepository.save(payment);
+
+        // Tự động gửi thông báo qua Zalo cho nhân viên (tự động bỏ qua Admin)
+        zaloNotificationService.sendPaymentNotification(employee, saved.getAmount(), saved.getNotes(), saved.getAdvanceDate());
+
+        return saved;
     }
 
     @Override

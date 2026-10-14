@@ -18,12 +18,14 @@ public class Employee {
     private String phoneNumber;
     private Boolean isActive;
     
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
     private String role; // "ROLE_ADMIN" or "ROLE_USER"
     
     @Column(name = "is_first_login", columnDefinition = "boolean default true")
     private Boolean isFirstLogin;
 
+    @Builder.Default
     @Column(name = "is_deleted", columnDefinition = "boolean default false")
     private Boolean isDeleted = false;
 

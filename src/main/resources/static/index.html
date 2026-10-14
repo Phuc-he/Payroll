@@ -103,6 +103,12 @@
                     <form id="profileForm" class="form-group">
                         <div class="input-row">
                             <div class="input-col">
+                                <label>Số Điện Thoại (Zalo nhận thông báo biến động lương/tiền)</label>
+                                <input type="text" id="myPhone" placeholder="Ví dụ: 0987654321">
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-col">
                                 <label>Tên Ngân Hàng (Tên viết tắt. VD: MB, VCB, TPB...)</label>
                                 <input type="text" id="myBankName" placeholder="VD: MB" required>
                             </div>
@@ -111,7 +117,7 @@
                                 <input type="text" id="myBankAcc" placeholder="Nhập số tài khoản của bạn" required>
                             </div>
                         </div>
-                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Lưu Thông Tin Ngân Hàng</button>
+                        <button type="submit" class="btn-primary" style="background: var(--success); width: 100%;">Lưu Thông Tin Cá Nhân & Ngân Hàng</button>
                     </form>
                     <div id="myQrPreview" style="margin-top: 2rem; text-align: center; display: none;">
                         <h3 style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 1rem;">Mã QR Thanh Toán Của Bạn</h3>
@@ -244,8 +250,8 @@
                                 <input type="text" id="newEmpName" placeholder="Nhập họ tên nhân viên" required>
                             </div>
                             <div class="input-col">
-                                <label>Số điện thoại</label>
-                                <input type="text" id="newEmpPhone" placeholder="Tùy chọn">
+                                <label>Số điện thoại (Zalo nhận tin nhắn)</label>
+                                <input type="text" id="newEmpPhone" placeholder="VD: 0987654321">
                             </div>
                         </div>
                         <div class="input-row">
@@ -419,7 +425,7 @@
     <div id="employeeDetailModal" class="modal hidden" style="z-index: 1050;">
         <div class="modal-content" style="max-width: 760px; max-height: 90vh; overflow-y: auto;">
             <span class="close-btn" onclick="closeEmployeeDetailModal()">&times;</span>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; padding-right: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; padding-right: 2rem; flex-wrap: wrap; gap: 0.75rem;">
                 <div>
                     <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
                         <span style="font-size: 1.25rem;">👤</span>
@@ -429,6 +435,14 @@
                     <div id="empModalContact" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; display: flex; gap: 1rem; flex-wrap: wrap;">
                         <!-- Phone & Bank info -->
                     </div>
+                </div>
+                <div id="empModalAdminActions" style="display: none; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                    <button type="button" class="action-btn action-btn-warning" onclick="openEditEmployeeModalFromQuickView()" title="Sửa thông tin hồ sơ nhân viên">
+                        ✏️ Sửa Hồ Sơ
+                    </button>
+                    <button type="button" class="action-btn action-btn-info" onclick="triggerResetPasswordFromQuickView()" title="Đặt lại mật khẩu về mặc định 123456">
+                        🔑 Reset MK
+                    </button>
                 </div>
             </div>
 
@@ -500,7 +514,65 @@
         </div>
     </div>
 
-    <script src="app.js?v=4"></script>
+    <!-- MODAL CHỈNH SỬA THÔNG TIN NHÂN VIÊN -->
+    <div id="editEmployeeModal" class="modal hidden" style="z-index: 1060;">
+        <div class="modal-content" style="max-width: 500px; padding: 2rem;">
+            <span class="close-btn" onclick="closeEditEmployeeModal()">&times;</span>
+            <h2 style="margin-bottom: 0.35rem; color: var(--text-primary); font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>Chỉnh Sửa Nhân Viên</span>
+                <span id="editEmpIdBadge" class="clickable-emp-badge">#ID</span>
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">Cập nhật thông tin hồ sơ hoặc đặt lại mật khẩu của nhân viên.</p>
+            
+            <form id="editEmployeeForm" class="form-group">
+                <input type="hidden" id="editEmpId">
+                <div class="input-col" style="margin-bottom: 1rem;">
+                    <label>Họ và Tên <span style="color: var(--danger)">*</span></label>
+                    <input type="text" id="editEmpFullName" required placeholder="Nhập họ và tên..." style="width: 100%;">
+                </div>
+                <div class="input-col" style="margin-bottom: 1rem;">
+                    <label>Số Điện Thoại</label>
+                    <input type="text" id="editEmpPhone" placeholder="Ví dụ: 0987654321" style="width: 100%;">
+                </div>
+                <div class="input-row" style="margin-bottom: 1rem;">
+                    <div class="input-col">
+                        <label>Tên Ngân Hàng (VD: MB, VCB...)</label>
+                        <input type="text" id="editEmpBankName" placeholder="VD: MB" style="width: 100%;">
+                    </div>
+                    <div class="input-col">
+                        <label>Số Tài Khoản</label>
+                        <input type="text" id="editEmpBankAcc" placeholder="Nhập số tài khoản..." style="width: 100%;">
+                    </div>
+                </div>
+                <div class="input-col" style="margin-bottom: 1.25rem;">
+                    <label>Trạng Thái Hoạt Động</label>
+                    <select id="editEmpIsActive" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: white;">
+                        <option value="true">Đang làm việc</option>
+                        <option value="false">Tạm ngưng / Không hoạt động</option>
+                    </select>
+                </div>
+
+                <!-- Live VietQR Preview -->
+                <div id="editEmpQrPreview" style="display: none; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.25rem; text-align: center;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">Mã VietQR kiểm tra tài khoản:</div>
+                    <img id="editEmpQrImg" src="" style="width: 140px; height: 140px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: contain; background: white;">
+                </div>
+
+                <!-- Footer Actions -->
+                <div style="display: flex; gap: 0.6rem; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                    <button type="button" class="action-btn action-btn-info" id="btnResetPasswordModal" style="padding: 0.55rem 0.9rem;" onclick="triggerResetPasswordFromEditModal()" title="Đặt lại mật khẩu về mặc định 123456">
+                        🔑 Reset MK (123456)
+                    </button>
+                    <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+                        <button type="button" class="btn-secondary" onclick="closeEditEmployeeModal()">Hủy</button>
+                        <button type="submit" class="btn-primary" style="background: var(--success);">Lưu Thay Đổi</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js?v=5"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then(function(reg) {

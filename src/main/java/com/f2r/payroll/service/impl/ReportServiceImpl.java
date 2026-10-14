@@ -173,6 +173,7 @@ public class ReportServiceImpl implements ReportService {
             return EmployeeOverviewItem.builder()
                     .id(emp.getId())
                     .fullName(emp.getFullName())
+                    .phoneNumber(emp.getPhoneNumber())
                     .totalWage(stats.getTotalWage())
                     .totalAdvance(stats.getTotalAdvance())
                     .actualReceived(stats.getActualReceived())

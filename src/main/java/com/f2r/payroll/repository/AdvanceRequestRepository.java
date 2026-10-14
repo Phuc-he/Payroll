@@ -10,4 +10,5 @@ import java.util.List;
 public interface AdvanceRequestRepository extends JpaRepository<AdvanceRequest, Long> {
     List<AdvanceRequest> findByEmployeeIdOrderByRequestDateDesc(String employeeId);
     List<AdvanceRequest> findAllByOrderByRequestDateDesc();
+    List<AdvanceRequest> findByEmployeeIdAndStatus(String employeeId, String status);
 }

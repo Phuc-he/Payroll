@@ -20,8 +20,18 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && (
+            "admin".equals(authentication.getName()) ||
+            authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))
+        );
+    }
+
     @PostMapping
-    public ResponseEntity<String> createEmployee(@RequestBody EmployeeRequest request) {
+    public ResponseEntity<?> createEmployee(Authentication authentication, @RequestBody EmployeeRequest request) {
+        if (!isAdmin(authentication)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Chỉ quản trị viên mới có quyền tạo nhân viên");
+        }
         return new ResponseEntity<>(employeeService.createEmployee(request).getId(), HttpStatus.CREATED);
     }
 
@@ -30,15 +40,48 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getEmployeeById(Authentication authentication, @PathVariable String id) {
+        if (!isAdmin(authentication) && (authentication == null || !authentication.getName().equals(id))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Không có quyền truy cập thông tin nhân viên này");
+        }
+        return ResponseEntity.ok(employeeService.getEmployeeById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateEmployee(
+            Authentication authentication,
+            @PathVariable String id,
+            @RequestBody EmployeeRequest request) {
+        if (!isAdmin(authentication)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Chỉ quản trị viên mới có quyền cập nhật thông tin nhân viên");
+        }
+        return ResponseEntity.ok(employeeService.updateEmployee(id, request));
+    }
+
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<?> resetPassword(
+            Authentication authentication,
+            @PathVariable String id) {
+        if (!isAdmin(authentication)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Chỉ quản trị viên mới có quyền đặt lại mật khẩu nhân viên");
+        }
+        employeeService.resetPassword(id);
+        return ResponseEntity.ok(Map.of("message", "Đã đặt lại mật khẩu của nhân viên " + id + " về mặc định (123456)"));
+    }
+
     @PutMapping("/me/bank")
     public ResponseEntity<?> updateMyBankInfo(Authentication authentication, @RequestBody Map<String, String> payload) {
         String employeeId = authentication.getName();
-        employeeService.updateBankInfo(employeeId, payload.get("bankName"), payload.get("bankAccountNumber"));
+        employeeService.updateProfile(employeeId, payload.get("phoneNumber"), payload.get("bankName"), payload.get("bankAccountNumber"));
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteEmployee(@PathVariable String id) {
+    public ResponseEntity<?> deleteEmployee(Authentication authentication, @PathVariable String id) {
+        if (!isAdmin(authentication)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Chỉ quản trị viên mới có quyền xóa nhân viên");
+        }
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok().build();
     }

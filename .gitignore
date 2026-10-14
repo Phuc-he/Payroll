@@ -479,6 +479,10 @@ Giá trị đơn sau KM (cột I)
   - doanh nghiệp và hộ kinh doanh : Có thể có đồng thời ALL và BUYERS -> mặc định ưu tiên BUYERS
   - Khuyến mại chỉ áp dụng vào báo giá sàn (ALL)
 
+# Zalo Gateway
+zalo-gateway/node_modules/
+zalo-gateway/session.json
+
 
 
 

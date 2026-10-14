@@ -515,6 +515,28 @@ button {
     color: #ffffff;
 }
 
+.action-btn-info {
+    background: #e0f2fe;
+    color: #0369a1;
+    border-color: #bae6fd;
+}
+
+.action-btn-info:hover {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.action-btn-purple {
+    background: var(--purple-light);
+    color: var(--purple-text);
+    border-color: var(--purple-border);
+}
+
+.action-btn-purple:hover {
+    background: var(--purple);
+    color: #ffffff;
+}
+
 /* =========================================
    MODALS (Clean High-Contrast Surfaces)
    ========================================= */
