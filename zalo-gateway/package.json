@@ -1,0 +1,16 @@
+{
+  "name": "zalo-gateway",
+  "version": "1.0.0",
+  "description": "Zalo Bot Gateway for Phuc Quan HR",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "qrcode-terminal": "^0.12.0",
+    "zca-js": "^2.2.0"
+  }
+}
