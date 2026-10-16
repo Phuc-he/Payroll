@@ -614,6 +614,14 @@ document.getElementById('payDate').value = new Date().toISOString().split('T')[0
 document.getElementById('payForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const resultBox = document.getElementById('payResult');
+
+    if (window.isZaloBotLoggedIn === false) {
+        const proceed = confirm(`⚠️ CẢNH BÁO: Zalo Bot hiện đang ngắt kết nối!\nNhân viên sẽ KHÔNG nhận được tin nhắn xác nhận qua Zalo.\n\nBạn có muốn tiếp tục lưu thanh toán không?`);
+        if (!proceed) {
+            openZaloModal();
+            return;
+        }
+    }
     
     const payload = {
         employeeId: document.getElementById('payEmpId').value,
@@ -1311,6 +1319,14 @@ document.getElementById('advanceRequestForm').addEventListener('submit', async (
 });
 
 window.payAdvanceRequest = async function(id, bankId, accountNo, amount, empName) {
+    if (window.isZaloBotLoggedIn === false) {
+        const proceed = confirm(`⚠️ CẢNH BÁO: Zalo Bot hiện đang ngắt kết nối!\nNhân viên sẽ KHÔNG nhận được tin nhắn xác nhận qua Zalo.\n\nBạn có muốn tiếp tục thanh toán không?`);
+        if (!proceed) {
+            openZaloModal();
+            return;
+        }
+    }
+
     if (!bankId || !accountNo) {
         if(!confirm(`Xác nhận đã thanh toán bằng TIỀN MẶT số tiền ${formatMoney(amount)} cho ${empName}?`)) return;
         executePay(id);
@@ -1361,6 +1377,12 @@ function applyRoleBasedUI(user) {
     if (userAvatarEl) {
         const initial = (user.fullName || user.username || 'U').charAt(0).toUpperCase();
         userAvatarEl.innerText = initial;
+    }
+
+    if (isAdmin) {
+        const menuZalo = document.getElementById('menu-zalo');
+        if (menuZalo) menuZalo.style.display = 'flex';
+        initZaloBotMonitoring();
     }
     
     if (!isAdmin) {
@@ -1990,3 +2012,198 @@ if (editEmpForm) {
         }
     });
 }
+
+// ==========================================
+// ZALO BOT MANAGEMENT & QR SCANNING
+// ==========================================
+let zaloPollTimer = null;
+let isZaloModalOpen = false;
+window.isZaloBotLoggedIn = null;
+
+async function checkZaloBotStatus(forceShowLoading = false) {
+    const loadingState = document.getElementById('zaloLoadingState');
+    const offlineState = document.getElementById('zaloOfflineState');
+    const connectedState = document.getElementById('zaloConnectedState');
+    const qrScanState = document.getElementById('zaloQrScanState');
+    const navBadge = document.getElementById('zaloNavBadge');
+    const alertBanner = document.getElementById('zaloAlertBanner');
+
+    if (forceShowLoading && loadingState) {
+        loadingState.style.display = 'block';
+        if (offlineState) offlineState.style.display = 'none';
+        if (connectedState) connectedState.style.display = 'none';
+        if (qrScanState) qrScanState.style.display = 'none';
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/zalo/status`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        window.isZaloBotLoggedIn = !!data.loggedIn;
+
+        // 1. Cập nhật Badge trên Menu Sidebar
+        if (navBadge) {
+            if (!data.serviceOnline) {
+                navBadge.textContent = 'Mất kết nối';
+                navBadge.style.background = '#ef4444';
+            } else if (data.loggedIn) {
+                navBadge.textContent = 'Đang bật';
+                navBadge.style.background = '#22c55e';
+            } else {
+                navBadge.textContent = 'Quét QR';
+                navBadge.style.background = '#f59e0b';
+            }
+        }
+
+        // 2. Cập nhật Banner cảnh báo trên trang
+        if (alertBanner && currentUser && currentUser.roles && currentUser.roles.includes('ROLE_ADMIN')) {
+            if (!data.loggedIn) {
+                alertBanner.style.display = 'flex';
+                const titleEl = document.getElementById('zaloAlertTitle');
+                const descEl = document.getElementById('zaloAlertDesc');
+                if (!data.serviceOnline) {
+                    if (titleEl) titleEl.textContent = 'Zalo Gateway chưa hoạt động!';
+                    if (descEl) descEl.textContent = 'Tiến trình Zalo chưa được bật. Vui lòng bấm để kết nối lại.';
+                } else {
+                    if (titleEl) titleEl.textContent = 'Zalo Bot đang ngắt kết nối / hết hạn!';
+                    if (descEl) descEl.textContent = 'Thông báo lương và tạm ứng tự động sẽ không thể gửi cho nhân viên. Hãy quét lại mã QR!';
+                }
+            } else {
+                alertBanner.style.display = 'none';
+            }
+        }
+
+        // 3. Nếu Modal đang mở, cập nhật giao diện Modal
+        if (isZaloModalOpen) {
+            if (loadingState) loadingState.style.display = 'none';
+
+            if (!data.serviceOnline) {
+                if (offlineState) offlineState.style.display = 'block';
+                if (connectedState) connectedState.style.display = 'none';
+                if (qrScanState) qrScanState.style.display = 'none';
+            } else if (data.loggedIn) {
+                if (offlineState) offlineState.style.display = 'none';
+                if (connectedState) connectedState.style.display = 'block';
+                if (qrScanState) qrScanState.style.display = 'none';
+
+                const nameEl = document.getElementById('zaloBotAccountName');
+                const idEl = document.getElementById('zaloBotAccountId');
+                if (nameEl) nameEl.textContent = (data.account && data.account.name) ? data.account.name : 'Phúc Quân HR';
+                if (idEl) idEl.textContent = (data.account && data.account.userId) ? `UID: ${data.account.userId}` : '';
+            } else {
+                // Đang chờ quét mã QR
+                if (offlineState) offlineState.style.display = 'none';
+                if (connectedState) connectedState.style.display = 'none';
+                if (qrScanState) qrScanState.style.display = 'block';
+
+                const qrImg = document.getElementById('zaloQrCodeImage');
+                const qrSkeleton = document.getElementById('zaloQrSkeleton');
+
+                if (data.qrImage) {
+                    if (qrImg) {
+                        qrImg.src = data.qrImage;
+                        qrImg.style.display = 'block';
+                    }
+                    if (qrSkeleton) qrSkeleton.style.display = 'none';
+                } else {
+                    if (qrImg) qrImg.style.display = 'none';
+                    if (qrSkeleton) qrSkeleton.style.display = 'flex';
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Không thể kiểm tra trạng thái Zalo Bot:', e.message);
+        window.isZaloBotLoggedIn = false;
+        if (navBadge) {
+            navBadge.textContent = 'Mất kết nối';
+            navBadge.style.background = '#ef4444';
+        }
+        if (alertBanner && currentUser && currentUser.roles && currentUser.roles.includes('ROLE_ADMIN')) {
+            alertBanner.style.display = 'flex';
+        }
+        if (isZaloModalOpen) {
+            if (loadingState) loadingState.style.display = 'none';
+            if (offlineState) offlineState.style.display = 'block';
+            if (connectedState) connectedState.style.display = 'none';
+            if (qrScanState) qrScanState.style.display = 'none';
+        }
+    }
+}
+
+window.openZaloModal = function() {
+    isZaloModalOpen = true;
+    const modal = document.getElementById('zaloModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+    checkZaloBotStatus(true);
+
+    // Bật polling nhanh mỗi 2s khi modal đang mở để nhận QR hoặc tự chuyển khi quét xong
+    if (zaloPollTimer) clearInterval(zaloPollTimer);
+    zaloPollTimer = setInterval(() => {
+        if (isZaloModalOpen) checkZaloBotStatus(false);
+    }, 2000);
+};
+
+window.closeZaloModal = function() {
+    isZaloModalOpen = false;
+    const modal = document.getElementById('zaloModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    // Giảm tần suất polling xuống còn 30s khi đóng modal
+    if (zaloPollTimer) clearInterval(zaloPollTimer);
+    zaloPollTimer = setInterval(() => {
+        checkZaloBotStatus(false);
+    }, 30000);
+};
+
+window.logoutZaloBot = async function() {
+    if (!confirm('Bạn có chắc chắn muốn đăng xuất tài khoản Zalo Bot hiện tại? Bạn sẽ cần quét lại mã QR để bot hoạt động lại.')) {
+        return;
+    }
+    const loadingState = document.getElementById('zaloLoadingState');
+    const connectedState = document.getElementById('zaloConnectedState');
+    if (loadingState) loadingState.style.display = 'block';
+    if (connectedState) connectedState.style.display = 'none';
+
+    try {
+        const res = await fetch(`${API_BASE}/zalo/logout`, { method: 'POST' });
+        if (!res.ok) throw new Error('Không thể đăng xuất');
+        setTimeout(() => {
+            checkZaloBotStatus(true);
+        }, 800);
+    } catch (err) {
+        alert('Lỗi khi đăng xuất: ' + err.message);
+        checkZaloBotStatus(false);
+    }
+};
+
+window.refreshZaloQR = async function() {
+    const qrImg = document.getElementById('zaloQrCodeImage');
+    const qrSkeleton = document.getElementById('zaloQrSkeleton');
+    if (qrImg) qrImg.style.display = 'none';
+    if (qrSkeleton) qrSkeleton.style.display = 'flex';
+
+    try {
+        await fetch(`${API_BASE}/zalo/refresh-qr`, { method: 'POST' });
+        setTimeout(() => {
+            checkZaloBotStatus(false);
+        }, 1000);
+    } catch (err) {
+        console.warn('Lỗi khi làm mới QR:', err);
+    }
+};
+
+function initZaloBotMonitoring() {
+    checkZaloBotStatus(false);
+    if (!zaloPollTimer) {
+        zaloPollTimer = setInterval(() => {
+            checkZaloBotStatus(false);
+        }, 30000);
+    }
+}
+

@@ -116,7 +116,7 @@ async function initZalo() {
 // REST API Endpoints
 // -------------------------------------------------------------
 
-// Kiểm tra trạng thái Bot
+// Kiểm tra trạng thái Bot và lấy QR nếu chưa đăng nhập
 app.get('/api/status', (req, res) => {
     res.json({
         loggedIn: !!apiInstance,
@@ -125,8 +125,48 @@ app.get('/api/status', (req, res) => {
             avatar: botUserInfo.avatar,
             userId: botUserInfo.userId
         } : null,
-        pendingQR: !!currentQRImage
+        pendingQR: !!currentQRImage,
+        qrImage: currentQRImage,
+        isLoggingIn: isLoggingIn
     });
+});
+
+// Đăng xuất và kích hoạt tạo mã QR mới
+app.post('/api/logout', async (req, res) => {
+    try {
+        console.log('[Zalo Gateway] Đang đăng xuất và xoá phiên làm việc...');
+        apiInstance = null;
+        botUserInfo = null;
+        currentQRImage = null;
+        currentQRRawCode = null;
+        friendsCache = [];
+        if (fs.existsSync(SESSION_FILE)) {
+            try { fs.unlinkSync(SESSION_FILE); } catch (e) {}
+        }
+        // Gọi initZalo để bắt đầu sinh mã QR mới
+        initZalo();
+        return res.json({ success: true, message: 'Đã đăng xuất và đang khởi tạo mã QR mới' });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Làm mới mã QR nếu chưa có hoặc đã hết hạn
+app.post('/api/refresh-qr', async (req, res) => {
+    try {
+        if (!apiInstance) {
+            currentQRImage = null;
+            currentQRRawCode = null;
+            if (fs.existsSync(SESSION_FILE)) {
+                try { fs.unlinkSync(SESSION_FILE); } catch (e) {}
+            }
+            initZalo();
+            return res.json({ success: true, message: 'Đang làm mới mã QR...' });
+        }
+        return res.json({ success: false, message: 'Bot đang ở trạng thái đăng nhập, không cần tạo QR.' });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 // Xem mã QR trực tiếp trên trình duyệt
@@ -203,7 +243,8 @@ app.post('/api/send-zalo', async (req, res) => {
     if (!apiInstance) {
         return res.status(503).json({
             success: false,
-            message: 'Zalo Bot chưa đăng nhập. Vui lòng quét mã QR tại http://localhost:' + PORT + '/qr'
+            sessionExpired: true,
+            message: 'Zalo Bot chưa đăng nhập hoặc đã bị ngắt kết nối. Vui lòng quét mã QR trên trang quản trị.'
         });
     }
 
@@ -267,8 +308,26 @@ app.post('/api/send-zalo', async (req, res) => {
         });
     } catch (err) {
         console.error(`[Zalo Gateway] ❌ Gửi tin nhắn Zalo thất bại:`, err.message);
+
+        // Kiểm tra nếu lỗi do phiên đăng nhập hết hạn hoặc bị đăng xuất
+        const errMsg = (err.message || '').toLowerCase();
+        const isAuthError = errMsg.includes('session') || errMsg.includes('auth') || errMsg.includes('login') ||
+                            errMsg.includes('token') || errMsg.includes('unauthorized') || errMsg.includes('expired') ||
+                            errMsg.includes('forbidden') || errMsg.includes('logout');
+
+        if (isAuthError) {
+            console.warn('[Zalo Gateway] ⚠️ Phiên làm việc Zalo bị lỗi hoặc hết hạn! Đang reset session...');
+            apiInstance = null;
+            botUserInfo = null;
+            try {
+                if (fs.existsSync(SESSION_FILE)) fs.unlinkSync(SESSION_FILE);
+            } catch (e) {}
+            initZalo();
+        }
+
         return res.status(500).json({
             success: false,
+            sessionExpired: isAuthError,
             error: err.message
         });
     }

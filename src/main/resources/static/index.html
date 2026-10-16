@@ -73,6 +73,15 @@
                     <svg class="nav-svg" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     <span>Hồ Sơ Của Tôi</span>
                 </button>
+                <button class="nav-item" id="menu-zalo" onclick="openZaloModal()" style="display: none;">
+                    <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    </svg>
+                    <span style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <span>Zalo Bot</span>
+                        <span id="zaloNavBadge" style="font-size: 0.7rem; font-weight: 600; padding: 2px 7px; border-radius: 9999px; background: #64748b; color: white;">...</span>
+                    </span>
+                </button>
             </nav>
 
             <!-- User Info Bar at bottom of sidebar -->
@@ -93,6 +102,20 @@
         <!-- MAIN CONTENT -->
         <main class="main-content">
             
+            <!-- CẢNH BÁO ZALO BOT BỊ NGẮT KẾT NỐI (Chỉ hiển thị cho Admin khi Bot chưa đăng nhập) -->
+            <div id="zaloAlertBanner" style="display: none; margin-bottom: 1.25rem; background: #fff7ed; border: 1px solid #fed7aa; border-left: 4px solid #ea580c; border-radius: 10px; padding: 0.85rem 1.15rem; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(234, 88, 12, 0.08); flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div>
+                        <div style="font-weight: 700; color: #9a3412; font-size: 0.95rem;" id="zaloAlertTitle">Zalo Bot đang ngắt kết nối!</div>
+                        <div style="font-size: 0.825rem; color: #c2410c; margin-top: 2px;" id="zaloAlertDesc">Thông báo lương và tạm ứng tự động sẽ không thể gửi cho nhân viên qua Zalo.</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-primary" onclick="openZaloModal()" style="padding: 0.45rem 1.1rem; font-size: 0.85rem; background: #ea580c; white-space: nowrap; border: none; cursor: pointer; border-radius: 6px; color: white; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <span>📲</span> <span>Quét Mã QR Kết Nối</span>
+                </button>
+            </div>
+
             <!-- TRANG 0: HỒ SƠ CỦA TÔI -->
             <div id="profile-page" class="page-section">
                 <section class="glass-card full-width">
@@ -572,7 +595,87 @@
         </div>
     </div>
 
-    <script src="app.js?v=5"></script>
+    <!-- MODAL QUẢN LÝ KẾT NỐI ZALO BOT -->
+    <div id="zaloModal" class="modal hidden" style="z-index: 1070;">
+        <div class="modal-content" style="max-width: 480px; padding: 2rem; border-top: 4px solid #0068ff;">
+            <span class="close-btn" onclick="closeZaloModal()">&times;</span>
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;">
+                <svg style="width: 28px; height: 28px; fill: #0068ff;" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.03 2 11c0 2.87 1.5 5.43 3.86 7.02l-.96 2.88a1 1 0 0 0 1.26 1.26l3.43-1.14c.78.21 1.58.33 2.41.33 5.52 0 10-4.03 10-9s-4.48-9-10-9zm0 16c-.73 0-1.44-.1-2.12-.29a1 1 0 0 0-.67.06l-2.07.69.58-1.74a1 1 0 0 0-.15-.96C6.41 14.54 5.5 12.87 5.5 11c0-3.58 3.36-6.5 7.5-6.5s7.5 2.92 7.5 6.5-3.36 6.5-7.5 6.5z"/>
+                </svg>
+                <h2 style="margin: 0; color: var(--text-primary); font-size: 1.3rem;">Quản Lý Zalo Bot</h2>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">
+                Tự động gửi tin nhắn xác nhận chi tiền, tạm ứng và biến động số dư lương cho nhân viên qua Zalo.
+            </p>
+
+            <!-- Loading State -->
+            <div id="zaloLoadingState" style="display: none; text-align: center; padding: 2rem 0;">
+                <div class="loading-spinner" style="margin: 0 auto 1rem; width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top: 3px solid #0068ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">Đang kết nối tới Zalo Gateway...</div>
+            </div>
+
+            <!-- Error / Offline State -->
+            <div id="zaloOfflineState" style="display: none; text-align: center; padding: 1.5rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; margin-bottom: 1rem;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔌</div>
+                <div style="font-weight: 600; color: #991b1b; margin-bottom: 0.25rem;">Zalo Gateway Chưa Hoạt Động</div>
+                <div style="font-size: 0.8rem; color: #b91c1c; margin-bottom: 1rem;">Tiến trình Node.js Gateway đang khởi động ngầm hoặc chưa được bật.</div>
+                <button type="button" class="btn-primary" onclick="loadZaloStatus(true)" style="background: #dc2626; padding: 0.45rem 1rem; font-size: 0.85rem;">🔄 Thử Kết Nối Lại</button>
+            </div>
+
+            <!-- Connected State -->
+            <div id="zaloConnectedState" style="display: none;">
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; text-align: center;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #dcfce7; color: #15803d; font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; margin-bottom: 0.75rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e;"></span> ĐANG HOẠT ĐỘNG
+                    </div>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #166534;" id="zaloBotAccountName">Phúc Quân HR</div>
+                    <div style="font-size: 0.8rem; color: #15803d; margin-top: 0.35rem;" id="zaloBotAccountId">UID: ...</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.85rem; border-top: 1px dashed #bbf7d0; padding-top: 0.75rem;">
+                        ✅ Đã sẵn sàng tự động bắn tin nhắn Zalo kèm biến động số dư khi Admin duyệt chi tiền hoặc tạm ứng.
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeZaloModal()">Đóng</button>
+                    <button type="button" class="action-btn action-btn-danger" onclick="logoutZaloBot()" style="padding: 0.6rem 1rem;">
+                        Đăng Xuất / Đổi Tài Khoản
+                    </button>
+                </div>
+            </div>
+
+            <!-- QR Code Scan State -->
+            <div id="zaloQrScanState" style="display: none; text-align: center;">
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #92400e; text-align: left; display: flex; gap: 0.6rem; align-items: center;">
+                    <span style="font-size: 1.2rem;">📱</span>
+                    <div>Mở ứng dụng <strong>Zalo trên điện thoại</strong>, chọn <strong>Quét mã QR</strong> và bấm <strong>Đăng nhập</strong>.</div>
+                </div>
+
+                <div style="position: relative; width: 220px; height: 220px; margin: 0 auto 1.25rem; border: 2px dashed #0068ff; border-radius: 16px; padding: 8px; background: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,104,255,0.1);">
+                    <img id="zaloQrCodeImage" src="" alt="Mã QR Zalo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px; display: none;">
+                    <div id="zaloQrSkeleton" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.8rem;">
+                        <div class="loading-spinner" style="width: 30px; height: 30px; border: 3px solid #e2e8f0; border-top: 3px solid #0068ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        Đang tạo mã QR...
+                    </div>
+                </div>
+
+                <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 1.25rem;">
+                    ⏱️ Trình duyệt sẽ tự động phát hiện và kết nối ngay khi bạn nhấn "Đăng nhập" trên điện thoại.
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn-secondary" onclick="refreshZaloQR()" style="font-size: 0.85rem; padding: 0.55rem 0.9rem;">
+                        🔄 Làm Mới QR
+                    </button>
+                    <button type="button" class="btn-primary" onclick="closeZaloModal()" style="font-size: 0.85rem; padding: 0.55rem 1.2rem;">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=6"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then(function(reg) {

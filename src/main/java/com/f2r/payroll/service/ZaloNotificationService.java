@@ -28,12 +28,16 @@ public class ZaloNotificationService {
     private String adminId;
 
     private final ReportService reportService;
+    private final TelegramService telegramService;
     private final RestTemplate restTemplate = new RestTemplate();
     private static final DecimalFormat VND_FORMAT = new DecimalFormat("###,###,### VNĐ");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy");
 
-    public ZaloNotificationService(@Lazy @Autowired(required = false) ReportService reportService) {
+    public ZaloNotificationService(
+            @Lazy @Autowired(required = false) ReportService reportService,
+            @Lazy @Autowired(required = false) TelegramService telegramService) {
         this.reportService = reportService;
+        this.telegramService = telegramService;
     }
 
     public boolean sendPaymentNotification(Employee employee, BigDecimal amount, String notes) {
@@ -140,7 +144,103 @@ public class ZaloNotificationService {
             return true;
         } catch (Exception e) {
             log.error("[Zalo Service] ❌ Lỗi khi gọi Zalo Gateway: {}", e.getMessage());
+
+            // Tự động bắn cảnh báo khẩn cấp qua Telegram cho Admin
+            notifyAdminZaloError(employee, formattedMoney, safeNotes, e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Bắn thông báo khẩn qua Telegram khi Zalo Gateway gặp sự cố hoặc session bị văng
+     */
+    private void notifyAdminZaloError(Employee employee, String formattedMoney, String notes, String errorDetail) {
+        if (telegramService == null) return;
+        try {
+            String alert = String.format(
+                "🚨 <b>[CẢNH BÁO ZALO BOT - PHÚC QUÂN HR]</b> 🚨\n\n" +
+                "❌ <b>KHÔNG THỂ GỬI TIN NHẮN ZALO CHO NHÂN VIÊN!</b>\n\n" +
+                "👤 <b>Nhân viên:</b> %s (SĐT: <code>%s</code>)\n" +
+                "💰 <b>Số tiền:</b> %s\n" +
+                "📝 <b>Nội dung:</b> %s\n" +
+                "⚠️ <b>Lỗi:</b> %s\n\n" +
+                "👉 <i>Zalo Bot có thể đã hết hạn đăng nhập hoặc chưa được bật. Vui lòng mở trang Quản trị để quét lại mã QR ngay!</i>",
+                employee.getFullName(),
+                employee.getPhoneNumber() != null ? employee.getPhoneNumber() : "Chưa có",
+                formattedMoney,
+                notes,
+                errorDetail != null ? errorDetail : "Gateway không phản hồi"
+            );
+            telegramService.sendMessage(alert);
+            log.info("[Zalo Service] Đã gửi cảnh báo lỗi gửi Zalo tới Telegram Admin thành công.");
+        } catch (Exception ex) {
+            log.warn("[Zalo Service] Không thể gửi cảnh báo qua Telegram: {}", ex.getMessage());
+        }
+    }
+
+    /**
+     * Lấy trạng thái của Zalo Gateway để hiển thị trên Web Admin
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getGatewayStatus() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String url = gatewayUrl.replaceAll("/+$", "") + "/api/status";
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            if (response != null) {
+                result.putAll(response);
+                result.put("serviceOnline", true);
+            } else {
+                result.put("serviceOnline", false);
+                result.put("loggedIn", false);
+            }
+        } catch (Exception e) {
+            result.put("serviceOnline", false);
+            result.put("loggedIn", false);
+            result.put("error", "Không thể kết nối tới Zalo Gateway (" + e.getMessage() + ")");
+        }
+        return result;
+    }
+
+    /**
+     * Yêu cầu Zalo Gateway đăng xuất và tạo mã QR mới
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> logoutGateway() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String url = gatewayUrl.replaceAll("/+$", "") + "/api/logout";
+            Map<String, Object> response = restTemplate.postForObject(url, null, Map.class);
+            if (response != null) {
+                result.putAll(response);
+            }
+            result.put("serviceOnline", true);
+        } catch (Exception e) {
+            result.put("serviceOnline", false);
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * Làm mới mã QR
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> refreshGatewayQR() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String url = gatewayUrl.replaceAll("/+$", "") + "/api/refresh-qr";
+            Map<String, Object> response = restTemplate.postForObject(url, null, Map.class);
+            if (response != null) {
+                result.putAll(response);
+            }
+            result.put("serviceOnline", true);
+        } catch (Exception e) {
+            result.put("serviceOnline", false);
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return result;
     }
 }
