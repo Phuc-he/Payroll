@@ -50,15 +50,26 @@ public class ZaloGatewayProcessManager {
         }
 
         try {
-            log.info("[Zalo Gateway Manager] Đang tự động khởi chạy Zalo Gateway (Node.js) tại {}...", gatewayDir.getAbsolutePath());
-            ProcessBuilder pb = new ProcessBuilder("node", "index.js");
+            String nodeCmd = "node";
+            if (new File("/usr/bin/node").exists()) {
+                nodeCmd = "/usr/bin/node";
+            } else if (new File("/usr/local/bin/node").exists()) {
+                nodeCmd = "/usr/local/bin/node";
+            }
+
+            log.info("[Zalo Gateway Manager] Đang tự động khởi chạy Zalo Gateway bằng '{}' tại {}...", nodeCmd, gatewayDir.getAbsolutePath());
+            ProcessBuilder pb = new ProcessBuilder(nodeCmd, "index.js");
             pb.directory(gatewayDir);
+            
+            // Đảm bảo Node.js chạy trên cổng 5001, KHÔNG bị Render đè PORT=10000 gây trùng cổng
+            pb.environment().put("ZALO_GATEWAY_PORT", "5001");
+            pb.environment().remove("PORT");
             
             // Kế thừa IO để log của Node.js xuất hiện trực tiếp trong console / tab Logs của Render
             pb.inheritIO();
 
             gatewayProcess = pb.start();
-            log.info("[Zalo Gateway Manager] ✅ Đã khởi chạy tiến trình Zalo Gateway thành công!");
+            log.info("[Zalo Gateway Manager] ✅ Đã khởi chạy tiến trình Zalo Gateway thành công (PID: {})!", gatewayProcess.pid());
         } catch (Exception e) {
             log.warn("[Zalo Gateway Manager] Không thể tự động khởi động Zalo Gateway: {}. Bạn có thể khởi động thủ công bằng 'cd zalo-gateway && npm start'", e.getMessage());
         }

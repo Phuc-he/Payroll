@@ -2207,3 +2207,7 @@ function initZaloBotMonitoring() {
     }
 }
 
+window.checkZaloBotStatus = checkZaloBotStatus;
+window.loadZaloStatus = checkZaloBotStatus;
+
+

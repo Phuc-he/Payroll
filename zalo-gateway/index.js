@@ -9,7 +9,7 @@ import { Zalo, ThreadType, LoginQRCallbackEventType } from 'zca-js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.ZALO_GATEWAY_PORT || 5001;
 const SESSION_FILE = path.join(__dirname, 'session.json');
 
 const app = express();
@@ -334,7 +334,7 @@ app.post('/api/send-zalo', async (req, res) => {
 });
 
 // Khởi động server
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
     console.log(`\n======================================================`);
     console.log(`🚀 Zalo Bot Gateway đang chạy tại cổng http://localhost:${PORT}`);
     console.log(`📌 Xem mã QR hoặc trạng thái tại: http://localhost:${PORT}/qr`);

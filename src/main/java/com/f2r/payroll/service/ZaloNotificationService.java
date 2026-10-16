@@ -21,7 +21,7 @@ import java.util.Map;
 @Service
 public class ZaloNotificationService {
 
-    @Value("${zalo.gateway.url:http://localhost:5001}")
+    @Value("${zalo.gateway.url:http://127.0.0.1:5001}")
     private String gatewayUrl;
 
     @Value("${zalo.admin.id:phucnd}")
