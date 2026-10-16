@@ -485,6 +485,7 @@ target/
 # Zalo Gateway
 zalo-gateway/node_modules/
 zalo-gateway/session.json
+zalo-gateway/gateway.log
 
 
 
